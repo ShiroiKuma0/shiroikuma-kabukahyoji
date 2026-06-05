@@ -212,4 +212,28 @@
   <string name="date_format_long">yyyy年MM月dd日</string>
    <string name="exact_alarm_permission_required_message">ウィジェットを適切なタイミングで更新するには、正確なアラームの権限が必要です。</string>
    <string name="go_to_settings">許可</string>
+
+  <!-- 白い熊 株価表示 UI customization page -->
+  <string name="ui_settings_summary">色・フォント・テーマ</string>
+  <string name="ui_language">言語</string>
+  <string name="ui_language_system">システム既定</string>
+  <string name="ui_section_theme">テーマ</string>
+  <string name="ui_section_colours">色</string>
+  <string name="ui_section_typography">文字</string>
+  <string name="ui_subgroup_foundation">基本</string>
+  <string name="ui_subgroup_changes">株価の増減</string>
+  <string name="ui_subgroup_headings">見出し</string>
+  <string name="ui_subgroup_body">本文・数値</string>
+  <string name="ui_dynamic_colour">Material You の色を使う</string>
+  <string name="ui_dynamic_colour_desc">壁紙のパレットに従います。オフにすると下のカスタム色を使用します。</string>
+  <string name="ui_colour_accent">アクセント</string>
+  <string name="ui_colour_background">背景</string>
+  <string name="ui_colour_text">文字色</string>
+  <string name="ui_colour_gain">上昇</string>
+  <string name="ui_colour_loss">下落</string>
+  <string name="ui_colour_default">既定</string>
+  <string name="ui_font">フォント</string>
+  <string name="ui_weight">太さ</string>
+  <string name="ui_text_size">文字サイズ</string>
+  <string name="ui_preview">プレビュー</string>
  </resources>

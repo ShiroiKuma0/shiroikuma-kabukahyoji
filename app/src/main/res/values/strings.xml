@@ -239,4 +239,30 @@
 
   <string name="exact_alarm_permission_required_message">The exact alarm permission is required to refresh the widget in a timely manner.</string>
   <string name="go_to_settings">Grant</string>
+
+  <!-- 白い熊 株価表示 UI customization page -->
+  <string name="shiroikuma_ui_category" translatable="false">白い熊 株価表示 UI</string>
+  <string name="ui_settings_summary">Colours, fonts and theme</string>
+  <string name="ui_language">Language</string>
+  <string name="ui_language_system">System default</string>
+  <string name="ui_section_theme">Theme</string>
+  <string name="ui_section_colours">Colours</string>
+  <string name="ui_section_typography">Typography</string>
+  <string name="ui_subgroup_foundation">Foundation</string>
+  <string name="ui_subgroup_changes">Stock changes</string>
+  <string name="ui_subgroup_headings">Headings</string>
+  <string name="ui_subgroup_body">Body &amp; numbers</string>
+  <string name="ui_dynamic_colour">Use Material You colours</string>
+  <string name="ui_dynamic_colour_desc">Follow the system wallpaper palette. Turn off to use the custom colours below.</string>
+  <string name="ui_colour_accent">Accent</string>
+  <string name="ui_colour_background">Background</string>
+  <string name="ui_colour_text">Text</string>
+  <string name="ui_colour_gain">Gain</string>
+  <string name="ui_colour_loss">Loss</string>
+  <string name="ui_colour_default">Default</string>
+  <string name="ui_font">Font</string>
+  <string name="ui_weight">Weight</string>
+  <string name="ui_text_size">Text size</string>
+  <string name="ui_preview">Preview</string>
+  <string name="font_sample_text" translatable="false">AaIiMmOoQqWw 012 白い熊相撲道 áÁčČďĎéÉ</string>
 </resources>

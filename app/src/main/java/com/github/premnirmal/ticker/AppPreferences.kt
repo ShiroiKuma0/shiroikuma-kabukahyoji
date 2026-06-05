@@ -218,6 +218,123 @@ class AppPreferences @Inject constructor(
         _showAddRemoveTooltip.value = count > 5
     }
 
+    // ---- 白い熊 株価表示 UI (custom theming) -------------------------------------------------
+
+    private val _uiUseDynamicColour = MutableStateFlow(sharedPreferences.getBoolean(UI_DYNAMIC_COLOUR, true))
+    val uiUseDynamicColourFlow: Flow<Boolean> = _uiUseDynamicColour
+    var uiUseDynamicColour: Boolean
+        get() = _uiUseDynamicColour.value
+        set(value) {
+            _uiUseDynamicColour.value = value
+            sharedPreferences.edit { putBoolean(UI_DYNAMIC_COLOUR, value) }
+        }
+
+    private fun colourFlow(key: String) = MutableStateFlow(sharedPreferences.getInt(key, COLOUR_UNSET))
+
+    private val _uiAccent = colourFlow(UI_ACCENT)
+    val uiAccentFlow: Flow<Int> = _uiAccent
+    var uiAccent: Int
+        get() = _uiAccent.value
+        set(value) {
+            _uiAccent.value = value
+            sharedPreferences.edit { putInt(UI_ACCENT, value) }
+        }
+
+    private val _uiBackground = colourFlow(UI_BACKGROUND)
+    val uiBackgroundFlow: Flow<Int> = _uiBackground
+    var uiBackground: Int
+        get() = _uiBackground.value
+        set(value) {
+            _uiBackground.value = value
+            sharedPreferences.edit { putInt(UI_BACKGROUND, value) }
+        }
+
+    private val _uiText = colourFlow(UI_TEXT)
+    val uiTextFlow: Flow<Int> = _uiText
+    var uiText: Int
+        get() = _uiText.value
+        set(value) {
+            _uiText.value = value
+            sharedPreferences.edit { putInt(UI_TEXT, value) }
+        }
+
+    private val _uiGain = colourFlow(UI_GAIN)
+    val uiGainFlow: Flow<Int> = _uiGain
+    var uiGain: Int
+        get() = _uiGain.value
+        set(value) {
+            _uiGain.value = value
+            sharedPreferences.edit { putInt(UI_GAIN, value) }
+        }
+
+    private val _uiLoss = colourFlow(UI_LOSS)
+    val uiLossFlow: Flow<Int> = _uiLoss
+    var uiLoss: Int
+        get() = _uiLoss.value
+        set(value) {
+            _uiLoss.value = value
+            sharedPreferences.edit { putInt(UI_LOSS, value) }
+        }
+
+    private val _uiHeadingFont = MutableStateFlow(sharedPreferences.getString(UI_HEADING_FONT, "").orEmpty())
+    val uiHeadingFontFlow: Flow<String> = _uiHeadingFont
+    var uiHeadingFont: String
+        get() = _uiHeadingFont.value
+        set(value) {
+            _uiHeadingFont.value = value
+            sharedPreferences.edit { putString(UI_HEADING_FONT, value) }
+        }
+
+    private val _uiBodyFont = MutableStateFlow(sharedPreferences.getString(UI_BODY_FONT, "").orEmpty())
+    val uiBodyFontFlow: Flow<String> = _uiBodyFont
+    var uiBodyFont: String
+        get() = _uiBodyFont.value
+        set(value) {
+            _uiBodyFont.value = value
+            sharedPreferences.edit { putString(UI_BODY_FONT, value) }
+        }
+
+    private val _uiHeadingWeight = MutableStateFlow(sharedPreferences.getInt(UI_HEADING_WEIGHT, 0))
+    val uiHeadingWeightFlow: Flow<Int> = _uiHeadingWeight
+    var uiHeadingWeight: Int
+        get() = _uiHeadingWeight.value
+        set(value) {
+            _uiHeadingWeight.value = value
+            sharedPreferences.edit { putInt(UI_HEADING_WEIGHT, value) }
+        }
+
+    private val _uiBodyWeight = MutableStateFlow(sharedPreferences.getInt(UI_BODY_WEIGHT, 0))
+    val uiBodyWeightFlow: Flow<Int> = _uiBodyWeight
+    var uiBodyWeight: Int
+        get() = _uiBodyWeight.value
+        set(value) {
+            _uiBodyWeight.value = value
+            sharedPreferences.edit { putInt(UI_BODY_WEIGHT, value) }
+        }
+
+    private val _uiTextScale = MutableStateFlow(sharedPreferences.getFloat(UI_TEXT_SCALE, 1.0f))
+    val uiTextScaleFlow: Flow<Float> = _uiTextScale
+    var uiTextScale: Float
+        get() = _uiTextScale.value
+        set(value) {
+            _uiTextScale.value = value
+            sharedPreferences.edit { putFloat(UI_TEXT_SCALE, value) }
+        }
+
+    private val _uiRecentColours = MutableStateFlow(
+        sharedPreferences.getString(UI_RECENT_COLOURS, "").orEmpty()
+            .split(',').mapNotNull { it.trim().toIntOrNull() }
+    )
+    val uiRecentColoursFlow: Flow<List<Int>> = _uiRecentColours
+    val uiRecentColours: List<Int>
+        get() = _uiRecentColours.value
+
+    fun addRecentColour(argb: Int) {
+        val updated = (listOf(argb) + _uiRecentColours.value).distinct().take(MAX_RECENT_COLOURS)
+        _uiRecentColours.value = updated
+        sharedPreferences.edit { putString(UI_RECENT_COLOURS, updated.joinToString(",")) }
+    }
+
     @Parcelize
     data class Time(
         val hour: Int,
@@ -277,6 +394,22 @@ class AppPreferences @Inject constructor(
         const val LIGHT_THEME = 0
         const val DARK_THEME = 1
         const val FOLLOW_SYSTEM_THEME = 2
+
+        // 白い熊 株価表示 UI custom theming
+        const val COLOUR_UNSET = Int.MIN_VALUE
+        const val UI_DYNAMIC_COLOUR = "UI_DYNAMIC_COLOUR"
+        const val UI_ACCENT = "UI_ACCENT"
+        const val UI_BACKGROUND = "UI_BACKGROUND"
+        const val UI_TEXT = "UI_TEXT"
+        const val UI_GAIN = "UI_GAIN"
+        const val UI_LOSS = "UI_LOSS"
+        const val UI_HEADING_FONT = "UI_HEADING_FONT"
+        const val UI_BODY_FONT = "UI_BODY_FONT"
+        const val UI_HEADING_WEIGHT = "UI_HEADING_WEIGHT"
+        const val UI_BODY_WEIGHT = "UI_BODY_WEIGHT"
+        const val UI_TEXT_SCALE = "UI_TEXT_SCALE"
+        const val UI_RECENT_COLOURS = "UI_RECENT_COLOURS"
+        const val MAX_RECENT_COLOURS = 12
 
         val TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
         val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofLocalizedDate(MEDIUM)

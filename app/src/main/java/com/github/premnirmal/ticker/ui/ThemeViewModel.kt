@@ -22,4 +22,17 @@ class ThemeViewModel @Inject constructor(
                 else -> SelectedTheme.SYSTEM
             }
         }
+
+    // 白い熊 株価表示 UI — runtime theming, observed by BaseActivity.
+    val useDynamicColour: Flow<Boolean> = appPreferences.uiUseDynamicColourFlow
+    val accentColour: Flow<Int> = appPreferences.uiAccentFlow
+    val backgroundColour: Flow<Int> = appPreferences.uiBackgroundFlow
+    val textColour: Flow<Int> = appPreferences.uiTextFlow
+    val gainColour: Flow<Int> = appPreferences.uiGainFlow
+    val lossColour: Flow<Int> = appPreferences.uiLossFlow
+    val headingFont: Flow<String> = appPreferences.uiHeadingFontFlow
+    val bodyFont: Flow<String> = appPreferences.uiBodyFontFlow
+    val headingWeight: Flow<Int> = appPreferences.uiHeadingWeightFlow
+    val bodyWeight: Flow<Int> = appPreferences.uiBodyWeightFlow
+    val textScale: Flow<Float> = appPreferences.uiTextScaleFlow
 }

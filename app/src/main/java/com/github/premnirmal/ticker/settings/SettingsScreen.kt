@@ -164,6 +164,19 @@ private fun LazyListScope.settingsItems(
     settingsData: SettingsData
 ) {
     item {
+        val context = LocalContext.current
+        SettingsText(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    context.startActivity(Intent(context, UiSettingsActivity::class.java))
+                },
+            title = stringResource(id = R.string.shiroikuma_ui_category),
+            subtitle = stringResource(id = R.string.ui_settings_summary)
+        )
+        Divider()
+    }
+    item {
         SettingsText(
             modifier = Modifier
                 .fillMaxWidth()
