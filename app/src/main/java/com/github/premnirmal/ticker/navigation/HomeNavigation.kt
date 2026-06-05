@@ -1,6 +1,7 @@
 package com.github.premnirmal.ticker.navigation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.layoutId
@@ -146,9 +148,11 @@ fun BottomNavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         destinations.forEach { destination ->
+            val tap = { navigateToTopLevelDestination(destination) }
+            val longClick = destination.onLongClick.takeIf { destination.enabled }
             NavigationBarItem(
                 selected = selectedDestination == destination.route.route,
-                onClick = { navigateToTopLevelDestination(destination) },
+                onClick = tap,
                 enabled = destination.enabled,
                 label = {
                     Text(
@@ -159,6 +163,7 @@ fun BottomNavigationBar(
                 alwaysShowLabel = false,
                 icon = {
                     Icon(
+                        modifier = Modifier.longPressable(destination.route, longClick, tap),
                         imageVector = destination.selectedIcon,
                         contentDescription = stringResource(id = destination.iconTextId),
                         tint = if (!destination.enabled) {
@@ -172,6 +177,23 @@ fun BottomNavigationBar(
                 }
             )
         }
+    }
+}
+
+/**
+ * Adds long-press handling on the (descendant) icon so it wins the gesture over the
+ * nav item's own click, while normal taps still navigate via [onTap]. No-op when
+ * [onLongClick] is null, leaving the item's standard click behaviour untouched.
+ */
+private fun Modifier.longPressable(
+    key: Any,
+    onLongClick: (() -> Unit)?,
+    onTap: () -> Unit
+): Modifier = if (onLongClick == null) {
+    this
+} else {
+    this.pointerInput(key) {
+        detectTapGestures(onLongPress = { onLongClick() }, onTap = { onTap() })
     }
 }
 
@@ -205,12 +227,15 @@ fun HomeNavigationRail(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     destinations.forEach { Destination ->
+                        val tap = { navigateToTopLevelDestination(Destination) }
+                        val longClick = Destination.onLongClick.takeIf { Destination.enabled }
                         NavigationRailItem(
                             selected = selectedDestination == Destination.route.route,
-                            onClick = { navigateToTopLevelDestination(Destination) },
+                            onClick = tap,
                             enabled = Destination.enabled,
                             icon = {
                                 Icon(
+                                    modifier = Modifier.longPressable(Destination.route, longClick, tap),
                                     imageVector = Destination.selectedIcon,
                                     contentDescription = stringResource(
                                         id = Destination.iconTextId
@@ -308,7 +333,8 @@ data class HomeBottomNavDestination(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
     val iconTextId: Int,
-    val enabled: Boolean = true
+    val enabled: Boolean = true,
+    val onLongClick: (() -> Unit)? = null
 )
 
 @Preview(device = Devices.NEXUS_9)

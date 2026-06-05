@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,6 +38,8 @@ import com.github.premnirmal.ticker.navigation.HomeRoute
 import com.github.premnirmal.ticker.navigation.LocalNavGraphViewModelStoreOwner
 import com.github.premnirmal.ticker.navigation.NavigationViewModel
 import com.github.premnirmal.ticker.navigation.calculateContentAndNavigationType
+import com.github.premnirmal.ticker.settings.UiSettingsActivity
+import android.content.Intent
 import com.github.premnirmal.ticker.ui.LocalAppMessaging
 import com.github.premnirmal.ticker.ui.LocalContentType
 import com.github.premnirmal.ticker.ui.NavigationContentPosition
@@ -82,6 +85,7 @@ fun HomeListDetail(
         }
         val viewModel: HomeViewModel = hiltViewModel(viewModelStoreOwner)
         val hasWidget = viewModel.hasWidget.collectAsState(initial = false)
+        val context = LocalContext.current
         val destinations = ArrayList<HomeBottomNavDestination>().apply {
             add(
                 HomeBottomNavDestination(
@@ -123,7 +127,10 @@ fun HomeListDetail(
                     HomeRoute.Settings,
                     ImageVector.vectorResource(id = drawable.ic_settings),
                     ImageVector.vectorResource(id = drawable.ic_settings),
-                    string.action_settings
+                    string.action_settings,
+                    onLongClick = {
+                        context.startActivity(Intent(context, UiSettingsActivity::class.java))
+                    }
                 )
             )
         }
