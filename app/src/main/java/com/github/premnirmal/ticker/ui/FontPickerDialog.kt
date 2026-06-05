@@ -30,11 +30,15 @@ import androidx.compose.ui.window.Dialog
 fun FontPickerDialog(
   title: String,
   selectedToken: String,
+  includeInherit: Boolean = false,
   onDismiss: () -> Unit,
   onSelect: (String) -> Unit,
 ) {
   val context = LocalContext.current
-  var options by remember { mutableStateOf(FontManager.options(context)) }
+  val inheritOption = FontOption(FontManager.TOKEN_INHERIT, FontManager.displayNameFor(FontManager.TOKEN_INHERIT))
+  var options by remember {
+    mutableStateOf(if (includeInherit) listOf(inheritOption) + FontManager.options(context) else FontManager.options(context))
+  }
 
   val importLauncher = rememberLauncherForActivityResult(
     ActivityResultContracts.OpenDocument()
@@ -42,7 +46,7 @@ fun FontPickerDialog(
     if (uri != null) {
       val name = FontManager.importFont(context, uri)
       if (name != null) {
-        options = FontManager.options(context)
+        options = if (includeInherit) listOf(inheritOption) + FontManager.options(context) else FontManager.options(context)
         onSelect(name)
       }
     }

@@ -12,9 +12,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.window.layout.DisplayFeature
+import com.github.premnirmal.ticker.ThemePage
 import com.github.premnirmal.ticker.detail.QuoteDetailScreen
 import com.github.premnirmal.ticker.home.HomeListDetail
 import com.github.premnirmal.ticker.network.data.Quote
+import com.github.premnirmal.ticker.ui.PageThemeProvider
 
 @Composable
 fun RootNavigationGraph(
@@ -33,12 +35,14 @@ fun RootNavigationGraph(
             composable(route = "${Graph.QUOTE_DETAIL}/{symbol}") {
                 val symbol = it.arguments?.getString("symbol")
                 symbol?.let { symbol ->
-                    QuoteDetailScreen(
-                        widthSizeClass = windowWidthSizeClass,
-                        contentType = null,
-                        displayFeatures = displayFeatures,
-                        quote = Quote(symbol = symbol)
-                    )
+                    PageThemeProvider(ThemePage.QUOTE_DETAIL) {
+                        QuoteDetailScreen(
+                            widthSizeClass = windowWidthSizeClass,
+                            contentType = null,
+                            displayFeatures = displayFeatures,
+                            quote = Quote(symbol = symbol)
+                        )
+                    }
                     return@composable
                 }
             }

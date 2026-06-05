@@ -234,6 +234,14 @@
   <string name="ui_colour_default">既定</string>
   <string name="ui_font">フォント</string>
   <string name="ui_weight">太さ</string>
+  <string name="ui_colour">色</string>
+  <string name="ui_size">サイズ</string>
   <string name="ui_text_size">文字サイズ</string>
   <string name="ui_preview">プレビュー</string>
+  <string name="ui_inherit">継承</string>
+  <string name="ui_section_pages">ページ</string>
+  <string name="ui_page_global">全体の外観</string>
+  <string name="ui_page_watchlist">ウォッチリスト</string>
+  <string name="ui_page_quote">銘柄詳細</string>
+  <string name="ui_page_settings">設定</string>
  </resources>

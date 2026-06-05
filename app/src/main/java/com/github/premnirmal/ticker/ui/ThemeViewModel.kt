@@ -2,6 +2,7 @@ package com.github.premnirmal.ticker.ui
 
 import androidx.lifecycle.ViewModel
 import com.github.premnirmal.ticker.AppPreferences
+import com.github.premnirmal.ticker.ThemePage
 import com.github.premnirmal.tickerwidget.ui.theme.SelectedTheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -35,4 +36,32 @@ class ThemeViewModel @Inject constructor(
     val headingWeight: Flow<Int> = appPreferences.uiHeadingWeightFlow
     val bodyWeight: Flow<Int> = appPreferences.uiBodyWeightFlow
     val textScale: Flow<Float> = appPreferences.uiTextScaleFlow
+
+    // Per-page theming, used by PageThemeProvider. Bumps on any colour/font/weight/scale write.
+    val themeVersion: Flow<Int> = appPreferences.themeVersionFlow
+
+    fun resolvedColour(page: ThemePage, attr: String): Int {
+        val value = appPreferences.getPageColour(page, attr)
+        return if (value != AppPreferences.COLOUR_UNSET) value
+        else appPreferences.getPageColour(ThemePage.GLOBAL, attr)
+    }
+
+    fun resolvedFontToken(page: ThemePage, attr: String): String {
+        val value = appPreferences.getPageFont(page, attr)
+        return if (value != AppPreferences.INHERIT_FONT) value
+        else appPreferences.getPageFont(ThemePage.GLOBAL, attr)
+    }
+
+    fun resolvedWeight(page: ThemePage, attr: String): Int {
+        val value = appPreferences.getPageWeight(page, attr)
+        return if (value >= 0) value else appPreferences.getPageWeight(ThemePage.GLOBAL, attr)
+    }
+
+    fun resolvedSize(page: ThemePage, attr: String): Float {
+        val value = appPreferences.getPageSize(page, attr)
+        if (value > 0f) return value
+        if (page == ThemePage.GLOBAL) return 1.0f
+        val global = appPreferences.getPageSize(ThemePage.GLOBAL, attr)
+        return if (global > 0f) global else 1.0f
+    }
 }

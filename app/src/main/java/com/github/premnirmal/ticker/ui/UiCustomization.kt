@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.compose.material3.Typography
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -28,6 +29,7 @@ object FontManager {
   const val TOKEN_SANS = "@sans"
   const val TOKEN_SERIF = "@serif"
   const val TOKEN_MONO = "@mono"
+  const val TOKEN_INHERIT = "@inherit"
 
   private val FONT_EXTENSIONS = setOf("ttf", "otf")
   private val familyCache = HashMap<String, FontFamily?>()
@@ -58,6 +60,7 @@ object FontManager {
   /** The Compose [FontFamily] for a token, or null to keep the base typography's family. */
   fun fontFamilyFor(context: Context, token: String): FontFamily? = when (token) {
     TOKEN_SYSTEM -> null
+    TOKEN_INHERIT -> null
     TOKEN_SANS -> FontFamily.SansSerif
     TOKEN_SERIF -> FontFamily.Serif
     TOKEN_MONO -> FontFamily.Monospace
@@ -68,6 +71,7 @@ object FontManager {
 
   fun displayNameFor(token: String): String = when (token) {
     TOKEN_SYSTEM -> "System default"
+    TOKEN_INHERIT -> "Inherit"
     TOKEN_SANS -> "Sans-serif"
     TOKEN_SERIF -> "Serif"
     TOKEN_MONO -> "Monospace"
@@ -132,36 +136,42 @@ fun buildAppTypography(
   bodyToken: String,
   headingWeight: Int,
   bodyWeight: Int,
-  scale: Float
+  headingColour: Int,
+  bodyColour: Int,
+  headingScale: Float,
+  bodyScale: Float
 ): Typography {
   val headingFamily = FontManager.fontFamilyFor(context, headingToken)
   val bodyFamily = FontManager.fontFamilyFor(context, bodyToken)
   val hWeight = fontWeightOf(headingWeight)
   val bWeight = fontWeightOf(bodyWeight)
+  val hColour = headingColour.toThemeColourOrUnspecified()
+  val bColour = bodyColour.toThemeColourOrUnspecified()
 
-  fun TextStyle.applied(family: FontFamily?, weight: FontWeight?): TextStyle = copy(
+  fun TextStyle.applied(family: FontFamily?, weight: FontWeight?, scale: Float, colour: Color): TextStyle = copy(
     fontFamily = family ?: fontFamily,
     fontWeight = weight ?: fontWeight,
     fontSize = if (fontSize != TextUnit.Unspecified) fontSize * scale else fontSize,
     lineHeight = if (lineHeight != TextUnit.Unspecified) lineHeight * scale else lineHeight,
+    color = if (colour.isSpecified) colour else color,
   )
 
   val base = AppTypography
   return base.copy(
-    displayLarge = base.displayLarge.applied(headingFamily, hWeight),
-    displayMedium = base.displayMedium.applied(headingFamily, hWeight),
-    displaySmall = base.displaySmall.applied(headingFamily, hWeight),
-    headlineLarge = base.headlineLarge.applied(headingFamily, hWeight),
-    headlineMedium = base.headlineMedium.applied(headingFamily, hWeight),
-    headlineSmall = base.headlineSmall.applied(headingFamily, hWeight),
-    titleLarge = base.titleLarge.applied(headingFamily, hWeight),
-    titleMedium = base.titleMedium.applied(headingFamily, hWeight),
-    titleSmall = base.titleSmall.applied(headingFamily, hWeight),
-    bodyLarge = base.bodyLarge.applied(bodyFamily, bWeight),
-    bodyMedium = base.bodyMedium.applied(bodyFamily, bWeight),
-    bodySmall = base.bodySmall.applied(bodyFamily, bWeight),
-    labelLarge = base.labelLarge.applied(bodyFamily, bWeight),
-    labelMedium = base.labelMedium.applied(bodyFamily, bWeight),
-    labelSmall = base.labelSmall.applied(bodyFamily, bWeight),
+    displayLarge = base.displayLarge.applied(headingFamily, hWeight, headingScale, hColour),
+    displayMedium = base.displayMedium.applied(headingFamily, hWeight, headingScale, hColour),
+    displaySmall = base.displaySmall.applied(headingFamily, hWeight, headingScale, hColour),
+    headlineLarge = base.headlineLarge.applied(headingFamily, hWeight, headingScale, hColour),
+    headlineMedium = base.headlineMedium.applied(headingFamily, hWeight, headingScale, hColour),
+    headlineSmall = base.headlineSmall.applied(headingFamily, hWeight, headingScale, hColour),
+    titleLarge = base.titleLarge.applied(headingFamily, hWeight, headingScale, hColour),
+    titleMedium = base.titleMedium.applied(headingFamily, hWeight, headingScale, hColour),
+    titleSmall = base.titleSmall.applied(headingFamily, hWeight, headingScale, hColour),
+    bodyLarge = base.bodyLarge.applied(bodyFamily, bWeight, bodyScale, bColour),
+    bodyMedium = base.bodyMedium.applied(bodyFamily, bWeight, bodyScale, bColour),
+    bodySmall = base.bodySmall.applied(bodyFamily, bWeight, bodyScale, bColour),
+    labelLarge = base.labelLarge.applied(bodyFamily, bWeight, bodyScale, bColour),
+    labelMedium = base.labelMedium.applied(bodyFamily, bWeight, bodyScale, bColour),
+    labelSmall = base.labelSmall.applied(bodyFamily, bWeight, bodyScale, bColour),
   )
 }

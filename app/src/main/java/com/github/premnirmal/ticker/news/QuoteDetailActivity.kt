@@ -13,8 +13,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.github.premnirmal.ticker.ThemePage
 import com.github.premnirmal.ticker.base.BaseActivity
 import com.github.premnirmal.ticker.detail.QuoteDetailScreen
+import com.github.premnirmal.ticker.ui.PageThemeProvider
 import com.google.accompanist.adaptive.calculateDisplayFeatures
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -56,12 +58,14 @@ class QuoteDetailActivity : BaseActivity() {
         } else {
             if (quote?.dataSafe?.quote != null) {
                 quote?.dataSafe?.quote?.let {
-                    QuoteDetailScreen(
-                        widthSizeClass = windowSizeClass.widthSizeClass,
-                        contentType = null,
-                        displayFeatures = calculateDisplayFeatures(this),
-                        quote = it,
-                    )
+                    PageThemeProvider(ThemePage.QUOTE_DETAIL) {
+                        QuoteDetailScreen(
+                            widthSizeClass = windowSizeClass.widthSizeClass,
+                            contentType = null,
+                            displayFeatures = calculateDisplayFeatures(this),
+                            quote = it,
+                        )
+                    }
                 }
             } else {
                 Box(modifier = Modifier.fillMaxSize()) {

@@ -23,6 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.github.premnirmal.ticker.AppPreferences
+import com.github.premnirmal.ticker.ThemePage
 import com.github.premnirmal.ticker.analytics.Analytics
 import com.github.premnirmal.ticker.model.StocksProvider
 import com.github.premnirmal.ticker.model.StocksProvider.FetchState
@@ -30,6 +31,7 @@ import com.github.premnirmal.ticker.showDialog
 import com.github.premnirmal.ticker.ui.AppMessaging
 import com.github.premnirmal.ticker.ui.CollectBottomSheetMessage
 import com.github.premnirmal.ticker.ui.LocalAppMessaging
+import com.github.premnirmal.ticker.ui.PageThemeProvider
 import com.github.premnirmal.ticker.ui.ThemeViewModel
 import com.github.premnirmal.ticker.ui.buildAppTypography
 import com.github.premnirmal.ticker.ui.toThemeColourOrUnspecified
@@ -80,37 +82,7 @@ abstract class BaseActivity : ComponentActivity() {
             }
         }
         setContent {
-            val currentTheme by themeViewModel.themePref.collectAsStateWithLifecycle(
-                initialValue = SelectedTheme.SYSTEM
-            )
-            val useDynamicColour by themeViewModel.useDynamicColour.collectAsStateWithLifecycle(initialValue = true)
-            val accent by themeViewModel.accentColour.collectAsStateWithLifecycle(initialValue = AppPreferences.COLOUR_UNSET)
-            val background by themeViewModel.backgroundColour.collectAsStateWithLifecycle(initialValue = AppPreferences.COLOUR_UNSET)
-            val text by themeViewModel.textColour.collectAsStateWithLifecycle(initialValue = AppPreferences.COLOUR_UNSET)
-            val gain by themeViewModel.gainColour.collectAsStateWithLifecycle(initialValue = AppPreferences.COLOUR_UNSET)
-            val loss by themeViewModel.lossColour.collectAsStateWithLifecycle(initialValue = AppPreferences.COLOUR_UNSET)
-            val headingFont by themeViewModel.headingFont.collectAsStateWithLifecycle(initialValue = "")
-            val bodyFont by themeViewModel.bodyFont.collectAsStateWithLifecycle(initialValue = "")
-            val headingWeight by themeViewModel.headingWeight.collectAsStateWithLifecycle(initialValue = 0)
-            val bodyWeight by themeViewModel.bodyWeight.collectAsStateWithLifecycle(initialValue = 0)
-            val textScale by themeViewModel.textScale.collectAsStateWithLifecycle(initialValue = 1.0f)
-            val context = LocalContext.current
-            val colourOverrides = ThemeColourOverrides(
-                accent = accent.toThemeColourOrUnspecified(),
-                background = background.toThemeColourOrUnspecified(),
-                text = text.toThemeColourOrUnspecified(),
-                gain = gain.toThemeColourOrUnspecified(),
-                loss = loss.toThemeColourOrUnspecified(),
-            )
-            val typography = remember(headingFont, bodyFont, headingWeight, bodyWeight, textScale) {
-                buildAppTypography(context, headingFont, bodyFont, headingWeight, bodyWeight, textScale)
-            }
-            AppTheme(
-                theme = currentTheme,
-                useDynamicColour = useDynamicColour,
-                colourOverrides = colourOverrides,
-                typography = typography,
-            ) {
+            PageThemeProvider(ThemePage.GLOBAL) {
                 CompositionLocalProvider(LocalAppMessaging provides appMessaging) {
                     val isDarkTheme = isSystemInDarkTheme()
                     DisposableEffect(isDarkTheme) {

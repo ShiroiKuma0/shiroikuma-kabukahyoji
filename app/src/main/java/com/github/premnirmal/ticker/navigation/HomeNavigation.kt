@@ -44,9 +44,11 @@ import com.github.premnirmal.ticker.home.HomeViewModel
 import com.github.premnirmal.ticker.home.WatchlistScreen
 import com.github.premnirmal.ticker.navigation.LayoutType.CONTENT
 import com.github.premnirmal.ticker.navigation.LayoutType.HEADER
+import com.github.premnirmal.ticker.ThemePage
 import com.github.premnirmal.ticker.news.NewsFeedScreen
 import com.github.premnirmal.ticker.portfolio.search.SearchScreen
 import com.github.premnirmal.ticker.settings.SettingsScreen
+import com.github.premnirmal.ticker.ui.PageThemeProvider
 import com.github.premnirmal.ticker.ui.LocalContentType
 import com.github.premnirmal.ticker.ui.NavigationContentPosition
 import com.github.premnirmal.ticker.ui.NavigationContentPosition.CENTER
@@ -75,16 +77,18 @@ fun HomeNavHost(
     ) {
         composable(HomeRoute.Watchlist.route) { backStackEntry ->
             val homeViewModel = hiltViewModel<HomeViewModel>(viewModelStoreOwner)
-            WatchlistScreen(
-                rootNavController = rootNavController,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface),
-                widthSizeClass = widthSizeClass,
-                displayFeatures = displayFeatures,
-                contentType = contentType,
-                viewModel = homeViewModel,
-            )
+            PageThemeProvider(ThemePage.WATCHLIST) {
+                WatchlistScreen(
+                    rootNavController = rootNavController,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surface),
+                    widthSizeClass = widthSizeClass,
+                    displayFeatures = displayFeatures,
+                    contentType = contentType,
+                    viewModel = homeViewModel,
+                )
+            }
         }
         composable(HomeRoute.Trending.route) {
             NewsFeedScreen(
@@ -127,12 +131,14 @@ fun HomeNavHost(
         }
         composable(HomeRoute.Settings.route) { backStackEntry ->
             val homeViewModel = hiltViewModel<HomeViewModel>(viewModelStoreOwner)
-            SettingsScreen(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface),
-                homeViewModel = homeViewModel,
-            )
+            PageThemeProvider(ThemePage.SETTINGS) {
+                SettingsScreen(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surface),
+                    homeViewModel = homeViewModel,
+                )
+            }
         }
     }
 }

@@ -12,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.window.layout.DisplayFeature
+import com.github.premnirmal.ticker.ThemePage
 import com.github.premnirmal.ticker.detail.QuoteDetailScreen
 import com.github.premnirmal.ticker.navigation.Graph
 import com.github.premnirmal.ticker.network.data.Quote
@@ -20,6 +21,7 @@ import com.github.premnirmal.ticker.ui.ContentType.DUAL_PANE
 import com.github.premnirmal.ticker.ui.ContentType.SINGLE_PANE
 import com.github.premnirmal.ticker.ui.EmptyState
 import com.github.premnirmal.ticker.ui.ListDetail
+import com.github.premnirmal.ticker.ui.PageThemeProvider
 import com.github.premnirmal.tickerwidget.R
 import com.google.accompanist.adaptive.HorizontalTwoPaneStrategy
 import java.net.URLEncoder
@@ -74,12 +76,14 @@ fun WatchlistScreen(
             }, detail = {
                 val quote = selectedQuote
                 if (quote != null) {
-                    QuoteDetailScreen(
-                        widthSizeClass = widthSizeClass,
-                        contentType = SINGLE_PANE,
-                        displayFeatures = displayFeatures,
-                        quote = quote
-                    )
+                    PageThemeProvider(ThemePage.QUOTE_DETAIL) {
+                        QuoteDetailScreen(
+                            widthSizeClass = widthSizeClass,
+                            contentType = SINGLE_PANE,
+                            displayFeatures = displayFeatures,
+                            quote = quote
+                        )
+                    }
                 } else {
                     EmptyState(text = stringResource(R.string.my_stock_portfolio))
                 }

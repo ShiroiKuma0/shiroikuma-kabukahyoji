@@ -2,113 +2,70 @@ package com.github.premnirmal.ticker.settings
 
 import androidx.lifecycle.ViewModel
 import com.github.premnirmal.ticker.AppPreferences
+import com.github.premnirmal.ticker.ThemePage
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
-
-enum class ColourTarget { ACCENT, BACKGROUND, TEXT, GAIN, LOSS }
-
-enum class FontTarget { HEADING, BODY }
-
-data class UiSettingsState(
-  val useDynamicColour: Boolean,
-  val themePref: Int,
-  val accent: Int,
-  val background: Int,
-  val text: Int,
-  val gain: Int,
-  val loss: Int,
-  val headingFont: String,
-  val bodyFont: String,
-  val headingWeight: Int,
-  val bodyWeight: Int,
-  val textScale: Float,
-  val recentColours: List<Int>,
-)
 
 @HiltViewModel
 class UiSettingsViewModel @Inject constructor(
   private val appPreferences: AppPreferences
 ) : ViewModel() {
 
-  private val _state = MutableStateFlow(readState())
-  val state: StateFlow<UiSettingsState> = _state
+  /** Bumps on any colour/font/weight/size/recent write; the screen reads values fresh on change. */
+  val version: Flow<Int> = appPreferences.themeVersionFlow
 
-  private fun readState() = UiSettingsState(
-    useDynamicColour = appPreferences.uiUseDynamicColour,
-    themePref = appPreferences.themePref,
-    accent = appPreferences.uiAccent,
-    background = appPreferences.uiBackground,
-    text = appPreferences.uiText,
-    gain = appPreferences.uiGain,
-    loss = appPreferences.uiLoss,
-    headingFont = appPreferences.uiHeadingFont,
-    bodyFont = appPreferences.uiBodyFont,
-    headingWeight = appPreferences.uiHeadingWeight,
-    bodyWeight = appPreferences.uiBodyWeight,
-    textScale = appPreferences.uiTextScale,
-    recentColours = appPreferences.uiRecentColours,
-  )
-
-  private fun refresh() {
-    _state.value = readState()
-  }
-
-  fun setUseDynamicColour(value: Boolean) {
-    appPreferences.uiUseDynamicColour = value
-    refresh()
-  }
-
+  // ---- Global-only (shown on the hub) ----
+  fun themePref(): Int = appPreferences.themePref
   fun setThemePref(value: Int) {
     appPreferences.themePref = value
-    refresh()
+    appPreferences.bumpThemeVersion()
   }
 
-  fun colourFor(target: ColourTarget): Int = when (target) {
-    ColourTarget.ACCENT -> appPreferences.uiAccent
-    ColourTarget.BACKGROUND -> appPreferences.uiBackground
-    ColourTarget.TEXT -> appPreferences.uiText
-    ColourTarget.GAIN -> appPreferences.uiGain
-    ColourTarget.LOSS -> appPreferences.uiLoss
+  fun useDynamicColour(): Boolean = appPreferences.uiUseDynamicColour
+  fun setUseDynamicColour(value: Boolean) {
+    appPreferences.uiUseDynamicColour = value
+    appPreferences.bumpThemeVersion()
   }
 
-  fun setColour(target: ColourTarget, argb: Int) {
-    when (target) {
-      ColourTarget.ACCENT -> appPreferences.uiAccent = argb
-      ColourTarget.BACKGROUND -> appPreferences.uiBackground = argb
-      ColourTarget.TEXT -> appPreferences.uiText = argb
-      ColourTarget.GAIN -> appPreferences.uiGain = argb
-      ColourTarget.LOSS -> appPreferences.uiLoss = argb
-    }
-    refresh()
-  }
+  fun recentColours(): List<Int> = appPreferences.uiRecentColours
 
-  fun clearColour(target: ColourTarget) = setColour(target, AppPreferences.COLOUR_UNSET)
+  // ---- Per-page, per-attribute ----
+  fun colour(page: ThemePage, attr: String): Int = appPreferences.getPageColour(page, attr)
 
-  fun addRecentColour(argb: Int) {
+  fun setColour(page: ThemePage, attr: String, argb: Int) {
+    appPreferences.setPageColour(page, attr, argb)
     appPreferences.addRecentColour(argb)
-    refresh()
   }
 
-  fun setFont(target: FontTarget, token: String) {
-    when (target) {
-      FontTarget.HEADING -> appPreferences.uiHeadingFont = token
-      FontTarget.BODY -> appPreferences.uiBodyFont = token
-    }
-    refresh()
+  fun clearColour(page: ThemePage, attr: String) {
+    appPreferences.setPageColour(page, attr, AppPreferences.COLOUR_UNSET)
   }
 
-  fun setWeight(target: FontTarget, value: Int) {
-    when (target) {
-      FontTarget.HEADING -> appPreferences.uiHeadingWeight = value
-      FontTarget.BODY -> appPreferences.uiBodyWeight = value
-    }
-    refresh()
+  fun fontToken(page: ThemePage, attr: String): String = appPreferences.getPageFont(page, attr)
+
+  fun setFont(page: ThemePage, attr: String, token: String) {
+    appPreferences.setPageFont(page, attr, token)
   }
 
-  fun setTextScale(value: Float) {
-    appPreferences.uiTextScale = value
-    refresh()
+  fun weight(page: ThemePage, attr: String): Int = appPreferences.getPageWeight(page, attr)
+
+  fun setWeight(page: ThemePage, attr: String, value: Int) {
+    appPreferences.setPageWeight(page, attr, value)
+  }
+
+  fun size(page: ThemePage, attr: String): Float = appPreferences.getPageSize(page, attr)
+
+  fun setSize(page: ThemePage, attr: String, value: Float) {
+    appPreferences.setPageSize(page, attr, value)
+  }
+
+  /** Effective size for the slider to display (page override, else global, else 1.0). */
+  fun resolvedSize(page: ThemePage, attr: String): Float {
+    val value = appPreferences.getPageSize(page, attr)
+    if (value > 0f) return value
+    if (page == ThemePage.GLOBAL) return 1.0f
+    val global = appPreferences.getPageSize(ThemePage.GLOBAL, attr)
+    return if (global > 0f) global else 1.0f
   }
 }

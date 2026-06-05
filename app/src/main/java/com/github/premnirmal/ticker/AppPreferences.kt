@@ -333,6 +333,108 @@ class AppPreferences @Inject constructor(
         val updated = (listOf(argb) + _uiRecentColours.value).distinct().take(MAX_RECENT_COLOURS)
         _uiRecentColours.value = updated
         sharedPreferences.edit { putString(UI_RECENT_COLOURS, updated.joinToString(",")) }
+        bumpThemeVersion()
+    }
+
+    // ---- Per-page theming (inherit from global, override per page) -------------------------------
+    // GLOBAL delegates to the fields above; the other pages use keyed prefs with inherit sentinels
+    // (COLOUR_UNSET / INHERIT_FONT / INHERIT_WEIGHT / INHERIT_SCALE). Any write bumps the version so
+    // observers (BaseActivity uses the per-field flows; PageThemeProvider uses this version) recompute.
+
+    private val _themeVersion = MutableStateFlow(0)
+    val themeVersionFlow: Flow<Int> = _themeVersion
+    fun bumpThemeVersion() {
+        _themeVersion.value = _themeVersion.value + 1
+    }
+
+    private fun pageKey(page: ThemePage, attr: String) = "UI_PAGE_${page.key}_$attr"
+
+    private fun globalColour(attr: String): Int = when (attr) {
+        ATTR_ACCENT -> uiAccent
+        ATTR_BACKGROUND -> uiBackground
+        ATTR_TEXT -> uiText
+        ATTR_GAIN -> uiGain
+        ATTR_LOSS -> uiLoss
+        else -> COLOUR_UNSET
+    }
+
+    private fun setGlobalColour(attr: String, value: Int) {
+        when (attr) {
+            ATTR_ACCENT -> uiAccent = value
+            ATTR_BACKGROUND -> uiBackground = value
+            ATTR_TEXT -> uiText = value
+            ATTR_GAIN -> uiGain = value
+            ATTR_LOSS -> uiLoss = value
+        }
+    }
+
+    // The foundation colours are stored in the legacy global fields; per-category colours
+    // (heading/body) and all non-global pages use the keyed store.
+    private val fieldColourAttrs = setOf(ATTR_ACCENT, ATTR_BACKGROUND, ATTR_TEXT, ATTR_GAIN, ATTR_LOSS)
+
+    fun getPageColour(page: ThemePage, attr: String): Int =
+        if (page == ThemePage.GLOBAL && attr in fieldColourAttrs) globalColour(attr)
+        else sharedPreferences.getInt(pageKey(page, attr), COLOUR_UNSET)
+
+    fun setPageColour(page: ThemePage, attr: String, value: Int) {
+        if (page == ThemePage.GLOBAL && attr in fieldColourAttrs) setGlobalColour(attr, value)
+        else sharedPreferences.edit { putInt(pageKey(page, attr), value) }
+        bumpThemeVersion()
+    }
+
+    private fun globalFont(attr: String): String = when (attr) {
+        ATTR_HEADING_FONT -> uiHeadingFont
+        ATTR_BODY_FONT -> uiBodyFont
+        else -> ""
+    }
+
+    private fun setGlobalFont(attr: String, value: String) {
+        when (attr) {
+            ATTR_HEADING_FONT -> uiHeadingFont = value
+            ATTR_BODY_FONT -> uiBodyFont = value
+        }
+    }
+
+    fun getPageFont(page: ThemePage, attr: String): String =
+        if (page == ThemePage.GLOBAL) globalFont(attr)
+        else sharedPreferences.getString(pageKey(page, attr), INHERIT_FONT) ?: INHERIT_FONT
+
+    fun setPageFont(page: ThemePage, attr: String, value: String) {
+        if (page == ThemePage.GLOBAL) setGlobalFont(attr, value)
+        else sharedPreferences.edit { putString(pageKey(page, attr), value) }
+        bumpThemeVersion()
+    }
+
+    private fun globalWeight(attr: String): Int = when (attr) {
+        ATTR_HEADING_WEIGHT -> uiHeadingWeight
+        ATTR_BODY_WEIGHT -> uiBodyWeight
+        else -> 0
+    }
+
+    private fun setGlobalWeight(attr: String, value: Int) {
+        when (attr) {
+            ATTR_HEADING_WEIGHT -> uiHeadingWeight = value
+            ATTR_BODY_WEIGHT -> uiBodyWeight = value
+        }
+    }
+
+    fun getPageWeight(page: ThemePage, attr: String): Int =
+        if (page == ThemePage.GLOBAL) globalWeight(attr)
+        else sharedPreferences.getInt(pageKey(page, attr), INHERIT_WEIGHT)
+
+    fun setPageWeight(page: ThemePage, attr: String, value: Int) {
+        if (page == ThemePage.GLOBAL) setGlobalWeight(attr, value)
+        else sharedPreferences.edit { putInt(pageKey(page, attr), value) }
+        bumpThemeVersion()
+    }
+
+    // Per-category text size multiplier (heading/body), keyed for every page. INHERIT_SCALE = inherit.
+    fun getPageSize(page: ThemePage, attr: String): Float =
+        sharedPreferences.getFloat(pageKey(page, attr), INHERIT_SCALE)
+
+    fun setPageSize(page: ThemePage, attr: String, value: Float) {
+        sharedPreferences.edit { putFloat(pageKey(page, attr), value) }
+        bumpThemeVersion()
     }
 
     @Parcelize
@@ -410,6 +512,25 @@ class AppPreferences @Inject constructor(
         const val UI_TEXT_SCALE = "UI_TEXT_SCALE"
         const val UI_RECENT_COLOURS = "UI_RECENT_COLOURS"
         const val MAX_RECENT_COLOURS = 12
+
+        // Per-page theming attributes + inherit sentinels
+        const val ATTR_ACCENT = "ACCENT"
+        const val ATTR_BACKGROUND = "BACKGROUND"
+        const val ATTR_TEXT = "TEXT"
+        const val ATTR_GAIN = "GAIN"
+        const val ATTR_LOSS = "LOSS"
+        const val ATTR_HEADING_FONT = "HEADING_FONT"
+        const val ATTR_BODY_FONT = "BODY_FONT"
+        const val ATTR_HEADING_WEIGHT = "HEADING_WEIGHT"
+        const val ATTR_BODY_WEIGHT = "BODY_WEIGHT"
+        const val ATTR_TEXT_SCALE = "TEXT_SCALE"
+        const val ATTR_HEADING_COLOUR = "HEADING_COLOUR"
+        const val ATTR_BODY_COLOUR = "BODY_COLOUR"
+        const val ATTR_HEADING_SIZE = "HEADING_SIZE"
+        const val ATTR_BODY_SIZE = "BODY_SIZE"
+        const val INHERIT_FONT = "@inherit"
+        const val INHERIT_WEIGHT = -1
+        const val INHERIT_SCALE = 0f
 
         val TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
         val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofLocalizedDate(MEDIUM)
