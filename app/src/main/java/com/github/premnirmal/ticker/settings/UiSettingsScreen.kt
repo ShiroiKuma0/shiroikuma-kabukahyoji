@@ -1,7 +1,6 @@
 package com.github.premnirmal.ticker.settings
 
 import androidx.activity.compose.BackHandler
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,7 +39,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.premnirmal.ticker.AppPreferences
@@ -105,7 +103,7 @@ private fun UiSettingsHub(
       val langLabels = LANGUAGE_OPTIONS
         .mapIndexed { index, option -> if (index == 0) systemLabel else option.label }
         .toTypedArray()
-      val currentLangTag = AppCompatDelegate.getApplicationLocales().toLanguageTags().substringBefore(',')
+      val currentLangTag = viewModel.language()
       val selectedLang = LANGUAGE_OPTIONS
         .indexOfFirst { it.tag.equals(currentLangTag, ignoreCase = true) }
         .coerceAtLeast(0)
@@ -114,7 +112,7 @@ private fun UiSettingsHub(
         title = stringResource(R.string.ui_language),
         items = langLabels,
         selected = selectedLang,
-        onSelected = { applyAppLanguage(LANGUAGE_OPTIONS[it].tag) },
+        onSelected = { viewModel.setLanguage(LANGUAGE_OPTIONS[it].tag) },
       )
 
       // Theme (global)
@@ -175,6 +173,21 @@ private fun PageThemeEditor(
         .padding(padding)
         .verticalScroll(rememberScrollState()),
     ) {
+      // Layout — quote detail page only.
+      if (page == ThemePage.QUOTE_DETAIL) {
+        SectionHeader(stringResource(R.string.ui_section_layout))
+        ListPreference(
+          modifier = indent(1),
+          title = stringResource(R.string.ui_layout),
+          items = arrayOf(
+            stringResource(R.string.ui_layout_default),
+            stringResource(R.string.ui_layout_graph_top),
+          ),
+          selected = viewModel.quoteLayout(),
+          onSelected = viewModel::setQuoteLayout,
+        )
+      }
+
       // Colours
       SectionHeader(stringResource(R.string.ui_section_colours))
       SubgroupHeader(stringResource(R.string.ui_subgroup_foundation), 1)
@@ -485,12 +498,3 @@ private val LANGUAGE_OPTIONS = listOf(
   LanguageOption("ru", "Русский"),
   LanguageOption("ja", "日本語"),
 )
-
-private fun applyAppLanguage(tag: String) {
-  val locales = if (tag.isEmpty()) {
-    LocaleListCompat.getEmptyLocaleList()
-  } else {
-    LocaleListCompat.forLanguageTags(tag)
-  }
-  AppCompatDelegate.setApplicationLocales(locales)
-}

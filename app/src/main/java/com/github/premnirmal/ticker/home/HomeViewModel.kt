@@ -45,6 +45,9 @@ class HomeViewModel @Inject constructor(
 
     private val commitsProvider by lazy { CommitsProvider() }
 
+    val quoteLayout: Flow<Int>
+        get() = appPreferences.uiQuoteLayoutFlow
+
     val fetchState: StateFlow<StocksProvider.FetchState>
         get() = stocksProvider.fetchState
     val nextFetch: Flow<String>

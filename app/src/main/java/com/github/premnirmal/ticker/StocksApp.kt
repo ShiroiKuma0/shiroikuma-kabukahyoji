@@ -2,6 +2,7 @@ package com.github.premnirmal.ticker
 
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import com.github.premnirmal.ticker.analytics.Analytics
 import com.github.premnirmal.ticker.components.Injector
 import com.github.premnirmal.ticker.components.LoggingTree
@@ -31,6 +32,12 @@ open class StocksApp : Application() {
         Injector.init(this)
         super.onCreate()
         AppCompatDelegate.setDefaultNightMode(appPreferences.nightMode)
+        // Re-apply the saved app language so it survives app updates (the system/AppCompat store can
+        // reset to the system locale on update); our pref is the source of truth.
+        val languageTag = appPreferences.uiLanguageTag
+        if (languageTag.isNotEmpty()) {
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(languageTag))
+        }
         initNotificationHandler()
         runBlocking { widgetDataProvider.refreshWidgetDataList() }
     }

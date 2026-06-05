@@ -10,8 +10,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.window.layout.DisplayFeature
+import com.github.premnirmal.ticker.AppPreferences
 import com.github.premnirmal.ticker.ThemePage
 import com.github.premnirmal.ticker.detail.QuoteDetailScreen
 import com.github.premnirmal.ticker.navigation.Graph
@@ -50,7 +52,23 @@ fun WatchlistScreen(
         SINGLE_PANE -> false
         DUAL_PANE -> true
     }
-    if (showListAndDetail) {
+    val quoteLayout by viewModel.quoteLayout.collectAsStateWithLifecycle(
+        initialValue = AppPreferences.QUOTE_LAYOUT_DEFAULT
+    )
+    val quote = selectedQuote
+    if (showListAndDetail && quote != null && quoteLayout == AppPreferences.QUOTE_LAYOUT_GRAPH_TOP) {
+        // Graph-on-top mode takes the full page width (the list is hidden); long-press the chart
+        // again to return to the list-detail view.
+        PageThemeProvider(ThemePage.QUOTE_DETAIL) {
+            QuoteDetailScreen(
+                modifier = modifier,
+                widthSizeClass = widthSizeClass,
+                contentType = SINGLE_PANE,
+                displayFeatures = displayFeatures,
+                quote = quote
+            )
+        }
+    } else if (showListAndDetail) {
         ListDetail(
             modifier = modifier, isDetailOpen = isDetailOpen, setIsDetailOpen = {
                 if (!it) {

@@ -321,6 +321,23 @@ class AppPreferences @Inject constructor(
             sharedPreferences.edit { putFloat(UI_TEXT_SCALE, value) }
         }
 
+    // Persisted app language tag (source of truth, re-applied on launch so it survives app updates).
+    var uiLanguageTag: String
+        get() = sharedPreferences.getString(UI_LANGUAGE_TAG, "").orEmpty()
+        set(value) {
+            sharedPreferences.edit { putString(UI_LANGUAGE_TAG, value) }
+        }
+
+    private val _uiQuoteLayout = MutableStateFlow(sharedPreferences.getInt(UI_QUOTE_LAYOUT, QUOTE_LAYOUT_DEFAULT))
+    val uiQuoteLayoutFlow: Flow<Int> = _uiQuoteLayout
+    var uiQuoteLayout: Int
+        get() = _uiQuoteLayout.value
+        set(value) {
+            _uiQuoteLayout.value = value
+            sharedPreferences.edit { putInt(UI_QUOTE_LAYOUT, value) }
+            bumpThemeVersion()
+        }
+
     private val _uiRecentColours = MutableStateFlow(
         sharedPreferences.getString(UI_RECENT_COLOURS, "").orEmpty()
             .split(',').mapNotNull { it.trim().toIntOrNull() }
@@ -528,6 +545,10 @@ class AppPreferences @Inject constructor(
         const val ATTR_BODY_COLOUR = "BODY_COLOUR"
         const val ATTR_HEADING_SIZE = "HEADING_SIZE"
         const val ATTR_BODY_SIZE = "BODY_SIZE"
+        const val UI_QUOTE_LAYOUT = "UI_QUOTE_LAYOUT"
+        const val QUOTE_LAYOUT_DEFAULT = 0
+        const val QUOTE_LAYOUT_GRAPH_TOP = 1
+        const val UI_LANGUAGE_TAG = "UI_LANGUAGE_TAG"
         const val INHERIT_FONT = "@inherit"
         const val INHERIT_WEIGHT = -1
         const val INHERIT_SCALE = 0f

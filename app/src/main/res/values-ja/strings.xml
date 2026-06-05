@@ -240,6 +240,10 @@
   <string name="ui_preview">プレビュー</string>
   <string name="ui_inherit">継承</string>
   <string name="ui_section_pages">ページ</string>
+  <string name="ui_section_layout">レイアウト</string>
+  <string name="ui_layout">銘柄詳細のレイアウト</string>
+  <string name="ui_layout_default">標準（2ペイン）</string>
+  <string name="ui_layout_graph_top">グラフを上、指標とニュースを下</string>
   <string name="ui_section_elements">要素</string>
   <string name="ui_elem_name">銘柄名</string>
   <string name="ui_elem_ticker">ティッカー</string>

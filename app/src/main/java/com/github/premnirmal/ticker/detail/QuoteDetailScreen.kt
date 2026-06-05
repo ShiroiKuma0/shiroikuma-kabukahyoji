@@ -74,6 +74,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -177,6 +179,7 @@ private fun QuoteDetailContent(
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val showAddRemoveTooltip by viewModel.showAddRemoveTooltip.collectAsStateWithLifecycle(true)
     val chartData by viewModel.data.collectAsStateWithLifecycle()
+    val quoteLayout by viewModel.quoteLayout.collectAsStateWithLifecycle(initialValue = AppPreferences.QUOTE_LAYOUT_DEFAULT)
     val state = rememberLazyGridState()
     var fullscreenChart by remember { mutableStateOf(false) }
     Scaffold(
@@ -257,7 +260,7 @@ private fun QuoteDetailContent(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            if (contentType == ContentType.SINGLE_PANE) {
+            if (quoteLayout != AppPreferences.QUOTE_LAYOUT_GRAPH_TOP && contentType == ContentType.SINGLE_PANE) {
                 LazyVerticalGrid(
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
@@ -275,6 +278,44 @@ private fun QuoteDetailContent(
                     newsItems(articles)
                     item {
                         Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
+            } else if (quoteLayout == AppPreferences.QUOTE_LAYOUT_GRAPH_TOP) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(horizontal = 8.dp)
+                ) {
+                    QuoteHeader(quote, chartData)
+                    GraphItem(quote, chartData, viewModel, onChartDoubleTap = { fullscreenChart = true })
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        LazyVerticalGrid(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fadingEdges(state = state),
+                            columns = Fixed(1),
+                            state = state,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            quoteDetailsGrid(details)
+                            quotePositionsNotesAlerts(quote, isInPortfolio)
+                            quoteBackground(quoteDetail)
+                            item { Spacer(modifier = Modifier.height(16.dp)) }
+                        }
+                        LazyVerticalGrid(
+                            modifier = Modifier.weight(1f),
+                            columns = Fixed(1),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            newsItems(articles)
+                            item { Spacer(modifier = Modifier.height(16.dp)) }
+                        }
                     }
                 }
             } else {
@@ -352,7 +393,6 @@ private fun FullscreenChartOverlay(
     viewModel: QuoteDetailViewModel,
     onClose: () -> Unit,
 ) {
-    BackHandler(enabled = true) { onClose() }
     val range by viewModel.range.collectAsStateWithLifecycle()
     val color = chartData?.changeColour ?: quote.changeColour
     val axesSpec = LocalQuoteElementStyles.current?.specs?.get(QuoteElement.AXES)
@@ -361,30 +401,41 @@ private fun FullscreenChartOverlay(
     val axisSizeScale = axesSpec?.size ?: 0f
     val axisTypeface = axesSpec?.fontToken?.takeIf { it != AppPreferences.INHERIT_FONT }
         ?.let { FontManager.androidTypeface(axesContext, it) }
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.surface,
+    // A full-window Dialog so fullscreen covers the whole screen even when launched from the
+    // inline (list-detail) chart. Double-tap, the close button, or Back all dismiss.
+    Dialog(
+        onDismissRequest = onClose,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            AndroidView(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
-                factory = { context -> createGraphView(context) },
-                update = { graphView ->
-                    updateGraphView(chartData?.dataPoints, graphView, quote, range, color.toArgb(), axisColour, axisSizeScale, axisTypeface)
-                },
-            )
-            IconButton(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .windowInsetsPadding(WindowInsets.statusBars),
-                onClick = onClose,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_close),
-                    contentDescription = null,
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.surface,
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                AndroidView(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp),
+                    factory = { context ->
+                        createGraphView(context).apply {
+                            onChartGestureListener = chartGestureListener(onDoubleTap = onClose, onLongPress = onClose)
+                        }
+                    },
+                    update = { graphView ->
+                        updateGraphView(chartData?.dataPoints, graphView, quote, range, color.toArgb(), axisColour, axisSizeScale, axisTypeface)
+                    },
                 )
+                IconButton(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .windowInsetsPadding(WindowInsets.statusBars),
+                    onClick = onClose,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_close),
+                        contentDescription = null,
+                    )
+                }
             }
         }
     }
@@ -428,54 +479,50 @@ private fun LazyGridScope.quoteInfo(
     viewModel: QuoteDetailViewModel,
     onChartDoubleTap: () -> Unit
 ) {
+    item(span = { GridItemSpan(maxLineSpan) }) {
+        QuoteHeader(quote, chartData)
+    }
+    item(span = { GridItemSpan(maxLineSpan) }) {
+        GraphItem(quote, chartData, viewModel, onChartDoubleTap)
+    }
+}
+
+@Composable
+private fun QuoteHeader(quote: Quote, chartData: HistoryProvider.ChartData?) {
     val lastTradePrice = quote.priceFormat.format(chartData?.regularMarketPrice ?: quote.lastTradePrice)
     val change = chartData?.changeStringWithSign() ?: quote.changeStringWithSign()
     val changePercent = chartData?.changePercentStringWithSign() ?: quote.changePercentStringWithSign()
-    item(span = {
-        GridItemSpan(maxLineSpan)
-    }) {
+    val changeColour = chartData?.changeColour ?: quote.changeColour
+    Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = quote.name,
             style = quoteElementTextStyle(QuoteElement.NAME, MaterialTheme.typography.bodyLarge),
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
-    }
-    item(span = {
-        GridItemSpan(maxLineSpan)
-    }) {
         Text(
             text = lastTradePrice,
             style = quoteElementTextStyle(QuoteElement.PRICE, MaterialTheme.typography.titleLarge),
-            color = quoteElementColour(QuoteElement.PRICE).takeOrElse { chartData?.changeColour ?: quote.changeColour },
+            color = quoteElementColour(QuoteElement.PRICE).takeOrElse { changeColour },
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
-    }
-    item(span = {
-        GridItemSpan(maxLineSpan)
-    }) {
-        Row(horizontalArrangement = Arrangement.Center) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
             Text(
                 modifier = Modifier.padding(end = 4.dp),
                 text = change,
-                color = quoteElementColour(QuoteElement.CHANGE).takeOrElse { chartData?.changeColour ?: quote.changeColour },
+                color = quoteElementColour(QuoteElement.CHANGE).takeOrElse { changeColour },
                 style = quoteElementTextStyle(QuoteElement.CHANGE, MaterialTheme.typography.bodyMedium),
                 textAlign = TextAlign.End
             )
             Text(
                 modifier = Modifier.padding(start = 4.dp),
                 text = changePercent,
-                color = quoteElementColour(QuoteElement.CHANGE).takeOrElse { chartData?.changeColour ?: quote.changeColour },
+                color = quoteElementColour(QuoteElement.CHANGE).takeOrElse { changeColour },
                 style = quoteElementTextStyle(QuoteElement.CHANGE, MaterialTheme.typography.bodyMedium),
                 textAlign = TextAlign.Start
             )
         }
-    }
-    item(span = {
-        GridItemSpan(maxLineSpan)
-    }) {
-        GraphItem(quote, chartData, viewModel, onChartDoubleTap)
     }
 }
 
@@ -513,7 +560,10 @@ private fun GraphItem(
                 AndroidView(
                     factory = { context ->
                         createGraphView(context).apply {
-                            onChartGestureListener = doubleTapGestureListener(onChartDoubleTap)
+                            onChartGestureListener = chartGestureListener(
+                                onDoubleTap = onChartDoubleTap,
+                                onLongPress = { viewModel.toggleQuoteLayout() },
+                            )
                         }
                     },
                     update = { graphView ->
@@ -833,12 +883,12 @@ private fun updateGraphView(
     graphView.invalidate()
 }
 
-// Fires onDoubleTap via MPAndroidChart's own gesture detection so single-tap (marker) and drag
-// on the chart keep working. Double-tap-to-zoom is already disabled in createGraphView.
-private fun doubleTapGestureListener(onDoubleTap: () -> Unit) = object : OnChartGestureListener {
+// Routes double-tap and long-press through MPAndroidChart's own gesture detection so single-tap
+// (marker) and drag keep working. Double-tap-to-zoom is already disabled in createGraphView.
+private fun chartGestureListener(onDoubleTap: () -> Unit, onLongPress: () -> Unit) = object : OnChartGestureListener {
     override fun onChartGestureStart(me: MotionEvent?, lastPerformedGesture: ChartGesture?) {}
     override fun onChartGestureEnd(me: MotionEvent?, lastPerformedGesture: ChartGesture?) {}
-    override fun onChartLongPressed(me: MotionEvent?) {}
+    override fun onChartLongPressed(me: MotionEvent?) { onLongPress() }
     override fun onChartDoubleTapped(me: MotionEvent?) { onDoubleTap() }
     override fun onChartSingleTapped(me: MotionEvent?) {}
     override fun onChartFling(me1: MotionEvent?, me2: MotionEvent?, velocityX: Float, velocityY: Float) {}

@@ -1,5 +1,7 @@
 package com.github.premnirmal.ticker.settings
 
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModel
 import com.github.premnirmal.ticker.AppPreferences
 import com.github.premnirmal.ticker.ThemePage
@@ -29,6 +31,20 @@ class UiSettingsViewModel @Inject constructor(
   }
 
   fun recentColours(): List<Int> = appPreferences.uiRecentColours
+
+  // Language — persisted in our prefs (source of truth) and applied via AppCompat.
+  fun language(): String = appPreferences.uiLanguageTag
+  fun setLanguage(tag: String) {
+    appPreferences.uiLanguageTag = tag
+    val locales = if (tag.isEmpty()) LocaleListCompat.getEmptyLocaleList() else LocaleListCompat.forLanguageTags(tag)
+    AppCompatDelegate.setApplicationLocales(locales)
+  }
+
+  // Quote-detail layout (default two-pane vs graph-on-top split).
+  fun quoteLayout(): Int = appPreferences.uiQuoteLayout
+  fun setQuoteLayout(value: Int) {
+    appPreferences.uiQuoteLayout = value
+  }
 
   // ---- Per-page, per-attribute ----
   fun colour(page: ThemePage, attr: String): Int = appPreferences.getPageColour(page, attr)

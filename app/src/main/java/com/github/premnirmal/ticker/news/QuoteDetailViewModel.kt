@@ -64,6 +64,18 @@ class QuoteDetailViewModel @Inject constructor(
     val showAddRemoveTooltip: Flow<Boolean>
         get() = appPreferences.showAddRemoveTooltip
 
+    val quoteLayout: Flow<Int>
+        get() = appPreferences.uiQuoteLayoutFlow
+
+    fun toggleQuoteLayout() {
+        appPreferences.uiQuoteLayout =
+            if (appPreferences.uiQuoteLayout == AppPreferences.QUOTE_LAYOUT_GRAPH_TOP) {
+                AppPreferences.QUOTE_LAYOUT_DEFAULT
+            } else {
+                AppPreferences.QUOTE_LAYOUT_GRAPH_TOP
+            }
+    }
+
     private var fetchQuoteJob: Job? = null
     private var quoteSummary: QuoteSummary? = null
     val range = MutableStateFlow<Range>(Range.ONE_DAY)

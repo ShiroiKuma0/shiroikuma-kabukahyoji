@@ -268,6 +268,10 @@
   <string name="ui_preview">Preview</string>
   <string name="ui_inherit">Inherit</string>
   <string name="ui_section_pages">Pages</string>
+  <string name="ui_section_layout">Layout</string>
+  <string name="ui_layout">Quote detail layout</string>
+  <string name="ui_layout_default">Default (two pane)</string>
+  <string name="ui_layout_graph_top">Graph on top, stats and news below</string>
   <string name="ui_section_elements">Elements</string>
   <string name="ui_elem_name">Company name</string>
   <string name="ui_elem_ticker">Ticker</string>
