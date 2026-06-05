@@ -2,7 +2,18 @@ package com.github.premnirmal.tickerwidget.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
+
+/**
+ * Per-theme overrides for the stock change colours, provided by [AppTheme] from the user's
+ * "白い熊 株価表示 UI" settings. Default [Color.Unspecified] means "use the built-in palette".
+ */
+val LocalChangePositive = compositionLocalOf { Color.Unspecified }
+val LocalChangeNegative = compositionLocalOf { Color.Unspecified }
+val LocalPositiveGreen = compositionLocalOf { Color.Unspecified }
+val LocalNegativeRed = compositionLocalOf { Color.Unspecified }
 
 internal object BaseAppColours {
   val light_primary = Color(0xFF006E08)
@@ -108,19 +119,27 @@ internal object ColourPaletteDark {
 object ColourPalette {
   val ChangePositive: Color
     @Composable get() {
-      return if (isSystemInDarkTheme()) ColourPaletteDark.change_positive else ColourPaletteLight.change_positive
+      val override = LocalChangePositive.current
+      return if (override.isSpecified) override
+      else if (isSystemInDarkTheme()) ColourPaletteDark.change_positive else ColourPaletteLight.change_positive
     }
   val ChangeNegative: Color
     @Composable get() {
-      return if (isSystemInDarkTheme()) ColourPaletteDark.change_negative else ColourPaletteLight.change_negative
+      val override = LocalChangeNegative.current
+      return if (override.isSpecified) override
+      else if (isSystemInDarkTheme()) ColourPaletteDark.change_negative else ColourPaletteLight.change_negative
     }
   val PositiveGreen: Color
     @Composable get() {
-      return if (isSystemInDarkTheme()) ColourPaletteDark.positive_green else ColourPaletteLight.positive_green
+      val override = LocalPositiveGreen.current
+      return if (override.isSpecified) override
+      else if (isSystemInDarkTheme()) ColourPaletteDark.positive_green else ColourPaletteLight.positive_green
     }
   val NegativeRed: Color
     @Composable get() {
-      return if (isSystemInDarkTheme()) ColourPaletteDark.negative_red else ColourPaletteLight.negative_red
+      val override = LocalNegativeRed.current
+      return if (override.isSpecified) override
+      else if (isSystemInDarkTheme()) ColourPaletteDark.negative_red else ColourPaletteLight.negative_red
     }
 
   val ImagePlaceHolderGray = Color(0x20a7a7a7)
