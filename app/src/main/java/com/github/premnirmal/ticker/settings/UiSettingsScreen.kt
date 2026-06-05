@@ -51,6 +51,7 @@ import com.github.premnirmal.ticker.ui.FontManager
 import com.github.premnirmal.ticker.ui.FontPickerDialog
 import com.github.premnirmal.ticker.ui.ListPreference
 import com.github.premnirmal.ticker.ui.PageThemeProvider
+import com.github.premnirmal.ticker.ui.QuoteElement
 import com.github.premnirmal.ticker.ui.SettingsText
 import com.github.premnirmal.ticker.ui.TopBar
 import com.github.premnirmal.tickerwidget.R
@@ -218,6 +219,25 @@ private fun PageThemeEditor(
         onPickFont = { fontEditAttr = AppPreferences.ATTR_BODY_FONT },
       )
 
+      // Per-element overrides — quote detail page only.
+      if (page == ThemePage.QUOTE_DETAIL) {
+        SectionHeader(stringResource(R.string.ui_section_elements))
+        QuoteElement.entries.forEach { element ->
+          SubgroupHeader(stringResource(elementTitle(element)), 1)
+          TypographyCategory(
+            page = page,
+            isGlobal = isGlobal,
+            fontAttr = element.fontAttr,
+            weightAttr = element.weightAttr,
+            colourAttr = element.colourAttr,
+            sizeAttr = element.sizeAttr,
+            viewModel = viewModel,
+            onPickColour = { editingColour = element.colourAttr to R.string.ui_colour },
+            onPickFont = { fontEditAttr = element.fontAttr },
+          )
+        }
+      }
+
       // Preview, rendered in this page's effective theme
       SubgroupHeader(stringResource(R.string.ui_preview), 1)
       PageThemeProvider(page) {
@@ -320,6 +340,17 @@ private fun SizeRow(page: ThemePage, attr: String, viewModel: UiSettingsViewMode
     )
     Spacer(modifier = Modifier.size(4.dp))
   }
+}
+
+private fun elementTitle(element: QuoteElement): Int = when (element) {
+  QuoteElement.NAME -> R.string.ui_elem_name
+  QuoteElement.TICKER -> R.string.ui_elem_ticker
+  QuoteElement.PRICE -> R.string.ui_elem_price
+  QuoteElement.CHANGE -> R.string.ui_elem_change
+  QuoteElement.AXES -> R.string.ui_elem_axes
+  QuoteElement.STAT_LABEL -> R.string.ui_elem_stat_label
+  QuoteElement.STAT_VALUE -> R.string.ui_elem_stat_value
+  QuoteElement.NEWS -> R.string.ui_elem_news
 }
 
 private fun pageTitle(page: ThemePage): Int = when (page) {

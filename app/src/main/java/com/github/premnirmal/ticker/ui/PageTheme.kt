@@ -1,6 +1,7 @@
 package com.github.premnirmal.ticker.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -49,12 +50,32 @@ fun PageThemeProvider(page: ThemePage, content: @Composable () -> Unit) {
     )
   }
 
+  // Per-element overrides for the quote-detail page (raw values; resolved at each call site).
+  val elementStyles = remember(page, version) {
+    if (page == ThemePage.QUOTE_DETAIL) {
+      QuoteElementStyles(
+        QuoteElement.entries.associateWith { element ->
+          ElementSpec(
+            fontToken = viewModel.rawFont(page, element.fontAttr),
+            weight = viewModel.rawWeight(page, element.weightAttr),
+            colour = viewModel.rawColour(page, element.colourAttr),
+            size = viewModel.rawSize(page, element.sizeAttr),
+          )
+        }
+      )
+    } else {
+      null
+    }
+  }
+
   AppTheme(
     theme = themeMode,
     useDynamicColour = useDynamicColour,
     colourOverrides = overrides,
     typography = typography,
   ) {
-    content()
+    CompositionLocalProvider(LocalQuoteElementStyles provides elementStyles) {
+      content()
+    }
   }
 }

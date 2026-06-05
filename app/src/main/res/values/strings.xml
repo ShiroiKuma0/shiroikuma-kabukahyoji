@@ -268,6 +268,15 @@
   <string name="ui_preview">Preview</string>
   <string name="ui_inherit">Inherit</string>
   <string name="ui_section_pages">Pages</string>
+  <string name="ui_section_elements">Elements</string>
+  <string name="ui_elem_name">Company name</string>
+  <string name="ui_elem_ticker">Ticker</string>
+  <string name="ui_elem_price">Price</string>
+  <string name="ui_elem_change">Change</string>
+  <string name="ui_elem_axes">Chart axes</string>
+  <string name="ui_elem_stat_label">Stat label</string>
+  <string name="ui_elem_stat_value">Stat value</string>
+  <string name="ui_elem_news">News</string>
   <string name="ui_page_global">Global appearance</string>
   <string name="ui_page_watchlist">Watchlist</string>
   <string name="ui_page_quote">Quote detail</string>

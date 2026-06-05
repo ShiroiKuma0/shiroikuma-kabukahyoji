@@ -65,6 +65,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -104,8 +105,14 @@ import com.github.premnirmal.ticker.portfolio.DisplaynameActivity
 import com.github.premnirmal.ticker.portfolio.HoldingsActivity
 import com.github.premnirmal.ticker.portfolio.NotesActivity
 import com.github.premnirmal.ticker.portfolio.search.AddSymbolDialog
+import com.github.premnirmal.ticker.AppPreferences
 import com.github.premnirmal.ticker.ui.ContentType
 import com.github.premnirmal.ticker.ui.DateAxisFormatter
+import com.github.premnirmal.ticker.ui.FontManager
+import com.github.premnirmal.ticker.ui.LocalQuoteElementStyles
+import com.github.premnirmal.ticker.ui.QuoteElement
+import com.github.premnirmal.ticker.ui.quoteElementColour
+import com.github.premnirmal.ticker.ui.quoteElementTextStyle
 import com.github.premnirmal.ticker.ui.ErrorState
 import com.github.premnirmal.ticker.ui.HourAxisFormatter
 import com.github.premnirmal.ticker.ui.LinkText
@@ -179,6 +186,7 @@ private fun QuoteDetailContent(
         topBar = {
             TopBar(
                 text = quote.symbol,
+                textStyle = quoteElementTextStyle(QuoteElement.TICKER, MaterialTheme.typography.headlineMedium),
                 actions = {
                     IconButton(
                         onClick = {
@@ -347,6 +355,12 @@ private fun FullscreenChartOverlay(
     BackHandler(enabled = true) { onClose() }
     val range by viewModel.range.collectAsStateWithLifecycle()
     val color = chartData?.changeColour ?: quote.changeColour
+    val axesSpec = LocalQuoteElementStyles.current?.specs?.get(QuoteElement.AXES)
+    val axesContext = LocalContext.current
+    val axisColour = axesSpec?.colour ?: AppPreferences.COLOUR_UNSET
+    val axisSizeScale = axesSpec?.size ?: 0f
+    val axisTypeface = axesSpec?.fontToken?.takeIf { it != AppPreferences.INHERIT_FONT }
+        ?.let { FontManager.androidTypeface(axesContext, it) }
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.surface,
@@ -358,7 +372,7 @@ private fun FullscreenChartOverlay(
                     .padding(8.dp),
                 factory = { context -> createGraphView(context) },
                 update = { graphView ->
-                    updateGraphView(chartData?.dataPoints, graphView, quote, range, color.toArgb())
+                    updateGraphView(chartData?.dataPoints, graphView, quote, range, color.toArgb(), axisColour, axisSizeScale, axisTypeface)
                 },
             )
             IconButton(
@@ -422,7 +436,7 @@ private fun LazyGridScope.quoteInfo(
     }) {
         Text(
             text = quote.name,
-            style = MaterialTheme.typography.bodyLarge,
+            style = quoteElementTextStyle(QuoteElement.NAME, MaterialTheme.typography.bodyLarge),
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
@@ -432,8 +446,8 @@ private fun LazyGridScope.quoteInfo(
     }) {
         Text(
             text = lastTradePrice,
-            style = MaterialTheme.typography.titleLarge,
-            color = chartData?.changeColour ?: quote.changeColour,
+            style = quoteElementTextStyle(QuoteElement.PRICE, MaterialTheme.typography.titleLarge),
+            color = quoteElementColour(QuoteElement.PRICE).takeOrElse { chartData?.changeColour ?: quote.changeColour },
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
@@ -445,15 +459,15 @@ private fun LazyGridScope.quoteInfo(
             Text(
                 modifier = Modifier.padding(end = 4.dp),
                 text = change,
-                color = chartData?.changeColour ?: quote.changeColour,
-                style = MaterialTheme.typography.bodyMedium,
+                color = quoteElementColour(QuoteElement.CHANGE).takeOrElse { chartData?.changeColour ?: quote.changeColour },
+                style = quoteElementTextStyle(QuoteElement.CHANGE, MaterialTheme.typography.bodyMedium),
                 textAlign = TextAlign.End
             )
             Text(
                 modifier = Modifier.padding(start = 4.dp),
                 text = changePercent,
-                color = chartData?.changeColour ?: quote.changeColour,
-                style = MaterialTheme.typography.bodyMedium,
+                color = quoteElementColour(QuoteElement.CHANGE).takeOrElse { chartData?.changeColour ?: quote.changeColour },
+                style = quoteElementTextStyle(QuoteElement.CHANGE, MaterialTheme.typography.bodyMedium),
                 textAlign = TextAlign.Start
             )
         }
@@ -475,6 +489,12 @@ private fun GraphItem(
     Column {
         val range by viewModel.range.collectAsStateWithLifecycle()
         val color = graphData?.changeColour ?: quote.changeColour
+        val axesSpec = LocalQuoteElementStyles.current?.specs?.get(QuoteElement.AXES)
+        val axesContext = LocalContext.current
+        val axisColour = axesSpec?.colour ?: AppPreferences.COLOUR_UNSET
+        val axisSizeScale = axesSpec?.size ?: 0f
+        val axisTypeface = axesSpec?.fontToken?.takeIf { it != AppPreferences.INHERIT_FONT }
+            ?.let { FontManager.androidTypeface(axesContext, it) }
         LaunchedEffect(quote.symbol, range) {
             viewModel.fetchChartData(quote.symbol, range)
         }
@@ -497,7 +517,7 @@ private fun GraphItem(
                         }
                     },
                     update = { graphView ->
-                        updateGraphView(graphData?.dataPoints, graphView, quote, range, color.toArgb())
+                        updateGraphView(graphData?.dataPoints, graphView, quote, range, color.toArgb(), axisColour, axisSizeScale, axisTypeface)
                     },
                 )
             }
@@ -757,7 +777,10 @@ private fun updateGraphView(
     graphView: LineChart,
     quote: Quote,
     range: Range,
-    color: Int
+    color: Int,
+    axisColour: Int = AppPreferences.COLOUR_UNSET,
+    axisSizeScale: Float = 0f,
+    axisTypeface: android.graphics.Typeface? = null
 ) {
     if (dataPoints.isNullOrEmpty()) {
         graphView.setNoDataText(graphView.context.getString(R.string.no_data))
@@ -790,10 +813,16 @@ private fun updateGraphView(
     }
     yAxis.valueFormatter = ValueAxisFormatter()
     xAxis.position = BOTTOM
-    xAxis.textSize = 10f
-    yAxis.textSize = 10f
-    xAxis.textColor = Color.GRAY
-    yAxis.textColor = Color.GRAY
+    val axisTextColour = if (axisColour != AppPreferences.COLOUR_UNSET) axisColour else Color.GRAY
+    val axisTextSize = 10f * (if (axisSizeScale > 0f) axisSizeScale else 1f)
+    xAxis.textSize = axisTextSize
+    yAxis.textSize = axisTextSize
+    xAxis.textColor = axisTextColour
+    yAxis.textColor = axisTextColour
+    if (axisTypeface != null) {
+        xAxis.typeface = axisTypeface
+        yAxis.typeface = axisTypeface
+    }
     xAxis.setLabelCount(5, true)
     yAxis.setLabelCount(5, true)
     yAxis.setPosition(OUTSIDE_CHART)

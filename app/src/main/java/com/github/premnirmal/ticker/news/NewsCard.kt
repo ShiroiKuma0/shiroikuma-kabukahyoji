@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.github.premnirmal.ticker.CustomTabs
 import com.github.premnirmal.ticker.network.data.NewsArticle
+import com.github.premnirmal.ticker.ui.QuoteElement
+import com.github.premnirmal.ticker.ui.quoteElementTextStyle
 import com.github.premnirmal.tickerwidget.ui.AppCard
 import com.github.premnirmal.tickerwidget.ui.theme.AppTheme
 import com.github.premnirmal.tickerwidget.ui.theme.ColourPalette
@@ -46,13 +48,13 @@ fun NewsCard(item: NewsArticle) {
                     modifier = Modifier.weight(1f),
                     text = item.sourceName(),
                     maxLines = 1,
-                    style = MaterialTheme.typography.labelSmall
+                    style = quoteElementTextStyle(QuoteElement.NEWS, MaterialTheme.typography.labelSmall)
                 )
                 Text(
                     textAlign = TextAlign.End,
                     text = item.dateString(),
                     maxLines = 1,
-                    style = MaterialTheme.typography.bodySmall
+                    style = quoteElementTextStyle(QuoteElement.NEWS, MaterialTheme.typography.bodySmall)
                 )
             }
             Row(modifier = Modifier.padding(top = 4.dp)) {
@@ -61,7 +63,7 @@ fun NewsCard(item: NewsArticle) {
                     text = item.titleSanitized(),
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = quoteElementTextStyle(QuoteElement.NEWS, MaterialTheme.typography.bodyMedium)
                 )
                 item.imageUrl?.let {
                     var sizeImage by remember { mutableStateOf(IntSize.Zero) }

@@ -240,6 +240,15 @@
   <string name="ui_preview">プレビュー</string>
   <string name="ui_inherit">継承</string>
   <string name="ui_section_pages">ページ</string>
+  <string name="ui_section_elements">要素</string>
+  <string name="ui_elem_name">銘柄名</string>
+  <string name="ui_elem_ticker">ティッカー</string>
+  <string name="ui_elem_price">価格</string>
+  <string name="ui_elem_change">増減</string>
+  <string name="ui_elem_axes">チャート軸</string>
+  <string name="ui_elem_stat_label">指標ラベル</string>
+  <string name="ui_elem_stat_value">指標の値</string>
+  <string name="ui_elem_news">ニュース</string>
   <string name="ui_page_global">全体の外観</string>
   <string name="ui_page_watchlist">ウォッチリスト</string>
   <string name="ui_page_quote">銘柄詳細</string>

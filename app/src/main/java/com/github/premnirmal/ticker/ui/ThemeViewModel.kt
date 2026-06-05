@@ -64,4 +64,10 @@ class ThemeViewModel @Inject constructor(
         val global = appPreferences.getPageSize(ThemePage.GLOBAL, attr)
         return if (global > 0f) global else 1.0f
     }
+
+    // Raw (un-resolved) values for per-element overrides — inherit sentinels are preserved.
+    fun rawColour(page: ThemePage, attr: String): Int = appPreferences.getPageColour(page, attr)
+    fun rawFont(page: ThemePage, attr: String): String = appPreferences.getPageFont(page, attr)
+    fun rawWeight(page: ThemePage, attr: String): Int = appPreferences.getPageWeight(page, attr)
+    fun rawSize(page: ThemePage, attr: String): Float = appPreferences.getPageSize(page, attr)
 }

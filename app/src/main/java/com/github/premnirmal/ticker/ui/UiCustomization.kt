@@ -69,6 +69,15 @@ object FontManager {
     }
   }
 
+  /** An android [android.graphics.Typeface] for a token (for views like the MPAndroidChart axes). */
+  fun androidTypeface(context: Context, token: String): android.graphics.Typeface? = when (token) {
+    TOKEN_SYSTEM, TOKEN_INHERIT -> null
+    TOKEN_SANS -> android.graphics.Typeface.SANS_SERIF
+    TOKEN_SERIF -> android.graphics.Typeface.SERIF
+    TOKEN_MONO -> android.graphics.Typeface.MONOSPACE
+    else -> runCatching { android.graphics.Typeface.createFromFile(File(fontsDir(context), token)) }.getOrNull()
+  }
+
   fun displayNameFor(token: String): String = when (token) {
     TOKEN_SYSTEM -> "System default"
     TOKEN_INHERIT -> "Inherit"
