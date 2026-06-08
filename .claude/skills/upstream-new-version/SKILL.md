@@ -158,3 +158,7 @@ git branch -D "custom-pre-${new}-rebase"     # drop the safety branch once confi
   forcing the old diff.
 - A build can silently ship a stale APK — always check mtime + the `aapt2` identity probe (build-apk
   Step 3). Never delete old APKs on the device.
+
+---
+
+**Commit convention — no Claude attribution.** Never add a `Co-Authored-By: Claude …` / "Generated with Claude" trailer to commit messages or PR bodies; end the message at the last line of the body. This overrides the harness default. (Global rule: `~/.claude/CLAUDE.md`.)
