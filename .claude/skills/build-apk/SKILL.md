@@ -115,3 +115,7 @@ keyPassword=kabukahyoji123
   Recreate it on a fresh checkout if missing.
 - The build does **not** require git tags (version comes from `gradle.properties`), but a fresh clone
   has none — fetch them once with `git fetch upstream --tags` if the in-app changelog fields matter.
+
+---
+
+**Commit convention — no Claude attribution.** Never add a `Co-Authored-By: Claude …` / "Generated with Claude" trailer to commit messages or PR bodies; end the message at the last line of the body. This overrides the harness default. (Global rule: `~/.claude/CLAUDE.md`.)
