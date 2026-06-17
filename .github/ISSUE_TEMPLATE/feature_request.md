@@ -1,9 +1,8 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
+about: Suggest an idea for 白い熊 株価表示
 title: ''
 labels: ''
-assignees: ''
 
 ---
 
@@ -12,10 +11,7 @@ assignees: ''
 These are MANDATORY, otherwise the issue will be automatically closed.
 
 * [] I agree to fill this issue template.
-* [] I have read the [Readme] and [Contributing guide].
-
-[Readme]: https://github.com/premnirmal/StockTicker/blob/master/README.md
-[Contributing guide]: https://github.com/premnirmal/StockTicker/blob/master/CONTRIBUTING.md
+* [] I have read the Readme.
 
 **Mandatory: Is your feature request related to a problem? Yes or no, please describe.**
 A clear and concise description of what the problem is. Eg. I'm always frustrated when [...]
