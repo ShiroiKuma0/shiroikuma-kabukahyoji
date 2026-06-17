@@ -1,9 +1,8 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Create a report to help us improve 白い熊 株価表示
 title: ''
 labels: bug
-assignees: ''
 
 ---
 
@@ -12,10 +11,7 @@ assignees: ''
 These are MANDATORY, otherwise the issue will be automatically closed.
 
 * [] I agree to fill this issue template.
-* [] I have read the [Readme] and [Contributing guide].
-
-[Readme]: https://github.com/premnirmal/StockTicker/blob/master/README.md
-[Contributing guide]: https://github.com/premnirmal/StockTicker/blob/master/CONTRIBUTING.md
+* [] I have read the Readme.
 
 **Describe the bug**
 A clear and concise description of what the bug is.
