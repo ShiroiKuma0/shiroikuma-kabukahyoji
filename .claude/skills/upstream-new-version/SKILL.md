@@ -13,8 +13,8 @@ this one references.
 > **Never `git push` or `git commit` unprompted, and never `adb install`.** The whole rebase + build
 > happens on the local tree as a scratchpad — a rebase is freely re-runnable (`git rebase --abort`,
 > or reset to `origin/custom`) right up until the user says **"Push."** Build, let the user test
-> on-device, and only then push. (The build's `adb push` to the phone is a separate, also user-gated
-> step.)
+> on-device, and only then push. (The build's APK delivery to the phone via `/after-build` is a
+> separate, automatic step — no prompt.)
 
 ## Background — how versioning works here
 
@@ -132,7 +132,8 @@ JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew :app:help -q < /dev/null 
 ## Step 7 — Build the new `+1`
 
 Build via the **build-apk** skill (`JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew buildFoss
-< /dev/null`), verify the APK (mtime + `aapt2` badging), then **ask** before any `adb push`. This is
+< /dev/null`), verify the APK (mtime + `aapt2` badging), then deliver it via **`/after-build`** (auto:
+`/adb-push` if a phone is connected, else `/scp` to skhw — no prompt). This is
 the first build of the new upstream line (`<new>+1`).
 
 ## Step 8 — Stop, then push only on "Push."
