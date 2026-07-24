@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.layout.DisplayFeature
 import com.github.premnirmal.ticker.AppPreferences
+import com.github.premnirmal.ticker.ThemePage
 import com.github.premnirmal.ticker.CustomTabs
 import com.github.premnirmal.ticker.model.Range
 import com.github.premnirmal.ticker.navigation.calculateContentAndNavigationType
@@ -40,6 +41,7 @@ import com.github.premnirmal.ticker.ui.ContentType.SINGLE_PANE
 import com.github.premnirmal.ticker.ui.LinkText
 import com.github.premnirmal.ticker.ui.LinkTextData
 import com.github.premnirmal.ticker.ui.LocalAppMessaging
+import com.github.premnirmal.ticker.ui.PageThemeProvider
 import com.github.premnirmal.ticker.ui.fadingEdges
 import com.github.premnirmal.ticker.ui.formatAxisDate
 import com.github.premnirmal.ticker.ui.formatAxisHour
@@ -67,6 +69,20 @@ import org.koin.compose.koinInject
  */
 @Composable
 fun QuoteDetailScreen(
+    modifier: Modifier = Modifier,
+    widthSizeClass: WindowWidthSizeClass,
+    contentType: com.github.premnirmal.ticker.ui.ContentType?,
+    displayFeatures: List<DisplayFeature>,
+    quote: Quote,
+    viewModel: QuoteDetailViewModel = koinViewModel()
+) {
+    PageThemeProvider(ThemePage.QUOTE_DETAIL) {
+        QuoteDetailScreenInner(modifier, widthSizeClass, contentType, displayFeatures, quote, viewModel)
+    }
+}
+
+@Composable
+private fun QuoteDetailScreenInner(
     modifier: Modifier = Modifier,
     widthSizeClass: WindowWidthSizeClass,
     contentType: com.github.premnirmal.ticker.ui.ContentType?,

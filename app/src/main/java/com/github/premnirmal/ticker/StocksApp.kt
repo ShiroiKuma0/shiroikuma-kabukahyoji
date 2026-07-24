@@ -2,6 +2,7 @@ package com.github.premnirmal.ticker
 
 import android.app.Application
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import coil3.PlatformContext
@@ -42,6 +43,12 @@ open class StocksApp : Application(), KoinComponent, SingletonImageLoader.Factor
         }
         super.onCreate()
         AppCompatDelegate.setDefaultNightMode(appPreferences.nightMode.toAppCompatNightMode())
+        // Re-apply the saved app language so it survives app updates (AppCompat's own store can reset
+        // to the system locale on update); our pref is the source of truth.
+        val languageTag = appPreferences.uiLanguageTag
+        if (languageTag.isNotEmpty()) {
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(languageTag))
+        }
         initNotificationHandler()
         runBlocking { widgetDataProvider.refreshWidgetDataList() }
     }
