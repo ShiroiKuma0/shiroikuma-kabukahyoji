@@ -2,7 +2,10 @@ package com.github.premnirmal.ticker
 
 import com.github.premnirmal.ticker.network.CrumbStore
 import com.github.premnirmal.ticker.settings.PreferenceStore
+import com.github.premnirmal.tickerwidget.ui.theme.COLOUR_UNSET
 import com.github.premnirmal.tickerwidget.ui.theme.SelectedTheme
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.text.DecimalFormat
 import java.text.Format
 import java.time.format.DateTimeFormatter
@@ -33,6 +36,190 @@ class AppPreferences constructor(
         } else {
             DECIMAL_FORMAT
         }
+
+    // ---- 白い熊 株価表示 UI: custom per-page / per-element theming --------------------------------
+    // GLOBAL is the base; the other pages inherit and override. Colours use the ARGB [COLOUR_UNSET]
+    // sentinel, fonts [INHERIT_FONT], weights [INHERIT_WEIGHT], size multipliers "inherit" = 0f. The
+    // five foundation colours + the global heading/body fonts and weights live in flat keys; every
+    // other attribute (and all non-global pages) use per-page `UI_PAGE_<page>_<attr>` keys, with the
+    // per-element quote-detail overrides keyed under the QUOTE_DETAIL page. Any write bumps
+    // [themeVersionFlow] so PageThemeProvider recomputes.
+
+    private val _themeVersion = MutableStateFlow(0)
+    val themeVersionFlow: StateFlow<Int> = _themeVersion
+    private fun bumpThemeVersion() {
+        _themeVersion.value += 1
+    }
+
+    var uiUseDynamicColour: Boolean
+        get() = store.getBoolean(UI_DYNAMIC_COLOUR, true)
+        set(value) {
+            store.setBoolean(UI_DYNAMIC_COLOUR, value)
+            bumpThemeVersion()
+        }
+
+    // Foundation colours = the GLOBAL page's accent/background/text/gain/loss.
+    var uiAccent: Int
+        get() = store.getInt(UI_ACCENT, COLOUR_UNSET)
+        set(value) { store.setInt(UI_ACCENT, value) }
+    var uiBackground: Int
+        get() = store.getInt(UI_BACKGROUND, COLOUR_UNSET)
+        set(value) { store.setInt(UI_BACKGROUND, value) }
+    var uiText: Int
+        get() = store.getInt(UI_TEXT, COLOUR_UNSET)
+        set(value) { store.setInt(UI_TEXT, value) }
+    var uiGain: Int
+        get() = store.getInt(UI_GAIN, COLOUR_UNSET)
+        set(value) { store.setInt(UI_GAIN, value) }
+    var uiLoss: Int
+        get() = store.getInt(UI_LOSS, COLOUR_UNSET)
+        set(value) { store.setInt(UI_LOSS, value) }
+
+    // Global heading/body fonts + weights.
+    var uiHeadingFont: String
+        get() = store.getString(UI_HEADING_FONT, "").orEmpty()
+        set(value) { store.setString(UI_HEADING_FONT, value) }
+    var uiBodyFont: String
+        get() = store.getString(UI_BODY_FONT, "").orEmpty()
+        set(value) { store.setString(UI_BODY_FONT, value) }
+    var uiHeadingWeight: Int
+        get() = store.getInt(UI_HEADING_WEIGHT, 0)
+        set(value) { store.setInt(UI_HEADING_WEIGHT, value) }
+    var uiBodyWeight: Int
+        get() = store.getInt(UI_BODY_WEIGHT, 0)
+        set(value) { store.setInt(UI_BODY_WEIGHT, value) }
+
+    var uiRecentColours: List<Int>
+        get() = store.getString(UI_RECENT_COLOURS, "").orEmpty()
+            .split(",").mapNotNull { it.trim().toIntOrNull() }
+        set(value) { store.setString(UI_RECENT_COLOURS, value.joinToString(",")) }
+
+    fun addRecentColour(argb: Int) {
+        uiRecentColours = (listOf(argb) + uiRecentColours).distinct().take(RECENT_COLOURS_MAX)
+    }
+
+    /** Persisted app language tag ("" = system). Source of truth, re-applied on launch in StocksApp. */
+    var uiLanguageTag: String
+        get() = store.getString(UI_LANGUAGE_TAG, "").orEmpty()
+        set(value) { store.setString(UI_LANGUAGE_TAG, value) }
+
+    // ---- Per-page keyed access ------------------------------------------------------------------
+
+    private fun pageKey(page: ThemePage, attr: String) = "$PAGE_KEY_PREFIX${page.key}_$attr"
+
+    private fun globalColour(attr: String): Int = when (attr) {
+        ATTR_ACCENT -> uiAccent
+        ATTR_BACKGROUND -> uiBackground
+        ATTR_TEXT -> uiText
+        ATTR_GAIN -> uiGain
+        ATTR_LOSS -> uiLoss
+        else -> COLOUR_UNSET
+    }
+
+    private fun setGlobalColour(attr: String, value: Int) {
+        when (attr) {
+            ATTR_ACCENT -> uiAccent = value
+            ATTR_BACKGROUND -> uiBackground = value
+            ATTR_TEXT -> uiText = value
+            ATTR_GAIN -> uiGain = value
+            ATTR_LOSS -> uiLoss = value
+        }
+    }
+
+    /** Raw colour for (page, attr): the page's own value, no inheritance. Element attrs live here too. */
+    fun getPageColour(page: ThemePage, attr: String): Int =
+        if (page == ThemePage.GLOBAL && attr in FIELD_COLOUR_ATTRS) globalColour(attr)
+        else store.getInt(pageKey(page, attr), COLOUR_UNSET)
+
+    fun setPageColour(page: ThemePage, attr: String, value: Int) {
+        if (page == ThemePage.GLOBAL && attr in FIELD_COLOUR_ATTRS) setGlobalColour(attr, value)
+        else store.setInt(pageKey(page, attr), value)
+        if (value != COLOUR_UNSET) addRecentColour(value)
+        bumpThemeVersion()
+    }
+
+    private fun globalFont(attr: String): String = when (attr) {
+        ATTR_HEADING_FONT -> uiHeadingFont
+        ATTR_BODY_FONT -> uiBodyFont
+        else -> ""
+    }
+
+    private fun setGlobalFont(attr: String, value: String) {
+        when (attr) {
+            ATTR_HEADING_FONT -> uiHeadingFont = value
+            ATTR_BODY_FONT -> uiBodyFont = value
+        }
+    }
+
+    fun getPageFont(page: ThemePage, attr: String): String =
+        if (page == ThemePage.GLOBAL && attr in GLOBAL_FONT_ATTRS) globalFont(attr)
+        else store.getString(pageKey(page, attr), INHERIT_FONT) ?: INHERIT_FONT
+
+    fun setPageFont(page: ThemePage, attr: String, value: String) {
+        if (page == ThemePage.GLOBAL && attr in GLOBAL_FONT_ATTRS) setGlobalFont(attr, value)
+        else store.setString(pageKey(page, attr), value)
+        bumpThemeVersion()
+    }
+
+    private fun globalWeight(attr: String): Int = when (attr) {
+        ATTR_HEADING_WEIGHT -> uiHeadingWeight
+        ATTR_BODY_WEIGHT -> uiBodyWeight
+        else -> 0
+    }
+
+    private fun setGlobalWeight(attr: String, value: Int) {
+        when (attr) {
+            ATTR_HEADING_WEIGHT -> uiHeadingWeight = value
+            ATTR_BODY_WEIGHT -> uiBodyWeight = value
+        }
+    }
+
+    fun getPageWeight(page: ThemePage, attr: String): Int =
+        if (page == ThemePage.GLOBAL && attr in GLOBAL_WEIGHT_ATTRS) globalWeight(attr)
+        else store.getInt(pageKey(page, attr), INHERIT_WEIGHT)
+
+    fun setPageWeight(page: ThemePage, attr: String, value: Int) {
+        if (page == ThemePage.GLOBAL && attr in GLOBAL_WEIGHT_ATTRS) setGlobalWeight(attr, value)
+        else store.setInt(pageKey(page, attr), value)
+        bumpThemeVersion()
+    }
+
+    // Size multiplier (Float) is stored as raw int bits — PreferenceStore has no Float accessor.
+    fun getPageSize(page: ThemePage, attr: String): Float =
+        Float.fromBits(store.getInt(pageKey(page, attr), INHERIT_SCALE_BITS))
+
+    fun setPageSize(page: ThemePage, attr: String, value: Float) {
+        store.setInt(pageKey(page, attr), value.toRawBits())
+        bumpThemeVersion()
+    }
+
+    // ---- Resolved values (page's own, else GLOBAL, else the built-in default) -------------------
+
+    fun resolvedColour(page: ThemePage, attr: String): Int {
+        val own = getPageColour(page, attr)
+        if (own != COLOUR_UNSET) return own
+        return if (page != ThemePage.GLOBAL) getPageColour(ThemePage.GLOBAL, attr) else COLOUR_UNSET
+    }
+
+    fun resolvedFontToken(page: ThemePage, attr: String): String {
+        val own = getPageFont(page, attr)
+        if (own != INHERIT_FONT) return own
+        return if (page != ThemePage.GLOBAL) getPageFont(ThemePage.GLOBAL, attr) else ""
+    }
+
+    fun resolvedWeight(page: ThemePage, attr: String): Int {
+        val own = getPageWeight(page, attr)
+        if (own != INHERIT_WEIGHT) return own
+        return if (page != ThemePage.GLOBAL) getPageWeight(ThemePage.GLOBAL, attr) else 0
+    }
+
+    fun resolvedSize(page: ThemePage, attr: String): Float {
+        val own = getPageSize(page, attr)
+        if (own > 0f) return own
+        if (page == ThemePage.GLOBAL) return 1.0f
+        val global = getPageSize(ThemePage.GLOBAL, attr)
+        return if (global > 0f) global else 1.0f
+    }
 
     companion object {
 
@@ -87,6 +274,47 @@ class AppPreferences constructor(
         const val LIGHT_THEME = 0
         const val DARK_THEME = 1
         const val FOLLOW_SYSTEM_THEME = 2
+
+        // 白い熊 株価表示 UI custom theming — flat (global foundation) keys
+        const val UI_ACCENT = "UI_ACCENT"
+        const val UI_BACKGROUND = "UI_BACKGROUND"
+        const val UI_TEXT = "UI_TEXT"
+        const val UI_GAIN = "UI_GAIN"
+        const val UI_LOSS = "UI_LOSS"
+        const val UI_HEADING_FONT = "UI_HEADING_FONT"
+        const val UI_BODY_FONT = "UI_BODY_FONT"
+        const val UI_HEADING_WEIGHT = "UI_HEADING_WEIGHT"
+        const val UI_BODY_WEIGHT = "UI_BODY_WEIGHT"
+        const val UI_DYNAMIC_COLOUR = "UI_DYNAMIC_COLOUR"
+        const val UI_RECENT_COLOURS = "UI_RECENT_COLOURS"
+        const val UI_LANGUAGE_TAG = "UI_LANGUAGE_TAG"
+        const val PAGE_KEY_PREFIX = "UI_PAGE_"
+        private const val RECENT_COLOURS_MAX = 18
+
+        // Per-page / per-category attribute keys
+        const val ATTR_ACCENT = "ACCENT"
+        const val ATTR_BACKGROUND = "BACKGROUND"
+        const val ATTR_TEXT = "TEXT"
+        const val ATTR_GAIN = "GAIN"
+        const val ATTR_LOSS = "LOSS"
+        const val ATTR_HEADING_FONT = "HEADING_FONT"
+        const val ATTR_BODY_FONT = "BODY_FONT"
+        const val ATTR_HEADING_WEIGHT = "HEADING_WEIGHT"
+        const val ATTR_BODY_WEIGHT = "BODY_WEIGHT"
+        const val ATTR_HEADING_COLOUR = "HEADING_COLOUR"
+        const val ATTR_BODY_COLOUR = "BODY_COLOUR"
+        const val ATTR_HEADING_SIZE = "HEADING_SIZE"
+        const val ATTR_BODY_SIZE = "BODY_SIZE"
+
+        // Inherit sentinels
+        const val INHERIT_FONT = "@inherit"
+        const val INHERIT_WEIGHT = -1
+        const val INHERIT_SCALE = 0f
+        private val INHERIT_SCALE_BITS = INHERIT_SCALE.toRawBits()
+
+        private val FIELD_COLOUR_ATTRS = setOf(ATTR_ACCENT, ATTR_BACKGROUND, ATTR_TEXT, ATTR_GAIN, ATTR_LOSS)
+        private val GLOBAL_FONT_ATTRS = setOf(ATTR_HEADING_FONT, ATTR_BODY_FONT)
+        private val GLOBAL_WEIGHT_ATTRS = setOf(ATTR_HEADING_WEIGHT, ATTR_BODY_WEIGHT)
 
         val TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
         val DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofLocalizedDate(MEDIUM)

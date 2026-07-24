@@ -239,4 +239,42 @@
 
   <string name="exact_alarm_permission_required_message">The exact alarm permission is required to refresh the widget in a timely manner.</string>
   <string name="go_to_settings">Grant</string>
+
+  <!-- 白い熊 株価表示 UI (Phase 2) -->
+  <string name="shiroikuma_ui_title" translatable="false">白い熊 株価表示 UI</string>
+  <string name="ui_appearance">Appearance</string>
+  <string name="ui_appearance_subtitle">Custom colours &amp; font</string>
+  <string name="ui_section_colours">Colours</string>
+  <string name="ui_section_font">Font</string>
+  <string name="ui_dynamic_colour">Dynamic colour</string>
+  <string name="ui_dynamic_colour_desc">Use Material You colours from the wallpaper (Android 12+)</string>
+  <string name="ui_accent">Accent</string>
+  <string name="ui_background">Background</string>
+  <string name="ui_text">Text</string>
+  <string name="ui_gain">Gain (up)</string>
+  <string name="ui_loss">Loss (down)</string>
+  <string name="ui_font">Font</string>
+  <string name="ui_default">Default</string>
+  <string name="ui_custom">Custom</string>
+
+  <!-- 白い熊 株価表示 UI (Phase 3 — per-page / per-element) -->
+  <string name="ui_section_pages">Pages</string>
+  <string name="ui_page_global">Global</string>
+  <string name="ui_page_watchlist">Watchlist</string>
+  <string name="ui_page_quote">Quote detail</string>
+  <string name="ui_page_settings">Settings</string>
+  <string name="ui_heading">Heading text</string>
+  <string name="ui_body">Body text</string>
+  <string name="ui_section_elements">Quote-detail elements</string>
+  <string name="ui_colour">Colour</string>
+  <string name="ui_size">Size</string>
+  <string name="ui_inherit">Inherit</string>
+  <string name="ui_element_name">Name</string>
+  <string name="ui_element_price">Price</string>
+  <string name="ui_element_change">Change</string>
+  <string name="ui_element_stat_label">Stat label</string>
+  <string name="ui_element_stat_value">Stat value</string>
+  <string name="ui_element_news">News</string>
+  <string name="ui_language">Language</string>
+  <string name="ui_language_system">System</string>
 </resources>

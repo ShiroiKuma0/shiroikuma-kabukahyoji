@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.ScrollableState
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -55,6 +57,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
@@ -63,6 +66,8 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.github.premnirmal.ticker.model.ChartData
 import com.github.premnirmal.ticker.model.Range
 import com.github.premnirmal.ticker.network.data.DataPoint
@@ -422,7 +427,7 @@ private fun LazyGridScope.quoteInfo(
     }) {
         Text(
             text = quote.name,
-            style = MaterialTheme.typography.bodyLarge,
+            style = quoteElementStyle(QuoteElement.NAME, MaterialTheme.typography.bodyLarge),
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
@@ -432,7 +437,7 @@ private fun LazyGridScope.quoteInfo(
     }) {
         Text(
             text = lastTradePrice,
-            style = MaterialTheme.typography.titleLarge,
+            style = quoteElementStyle(QuoteElement.PRICE, MaterialTheme.typography.titleLarge),
             color = changeColour,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
@@ -446,14 +451,14 @@ private fun LazyGridScope.quoteInfo(
                 modifier = Modifier.padding(end = 4.dp),
                 text = change,
                 color = changeColour,
-                style = MaterialTheme.typography.bodyMedium,
+                style = quoteElementStyle(QuoteElement.CHANGE, MaterialTheme.typography.bodyMedium),
                 textAlign = TextAlign.End
             )
             Text(
                 modifier = Modifier.padding(start = 4.dp),
                 text = changePercent,
                 color = changeColour,
-                style = MaterialTheme.typography.bodyMedium,
+                style = quoteElementStyle(QuoteElement.CHANGE, MaterialTheme.typography.bodyMedium),
                 textAlign = TextAlign.Start
             )
         }
@@ -498,11 +503,13 @@ private fun GraphItem(
         (windowInfo.containerSize.height.toDp() * ChartHeightRatio)
             .coerceIn(MinChartHeight, MaxChartHeight)
     }
+    var fullscreen by remember { mutableStateOf(false) }
     Column {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(chartHeight),
+                .height(chartHeight)
+                .pointerInput(Unit) { detectTapGestures(onDoubleTap = { fullscreen = true }) },
             contentAlignment = Alignment.Center
         ) {
             if (!graphError && dataPoints.isEmpty()) {
@@ -559,6 +566,55 @@ private fun GraphItem(
             }, selected = range != Range.MAX, label = {
                 Text(text = strings.rangeMax)
             })
+        }
+        if (fullscreen) {
+            FullscreenChart(
+                dataPoints = dataPoints,
+                lineColor = lineColor,
+                range = range,
+                hourAxisFormatter = hourAxisFormatter,
+                dateAxisFormatter = dateAxisFormatter,
+                valueAxisFormatter = valueAxisFormatter,
+                markerFormatter = markerFormatter,
+                onDismiss = { fullscreen = false },
+            )
+        }
+    }
+}
+
+@Composable
+private fun FullscreenChart(
+    dataPoints: List<DataPoint>,
+    lineColor: Color,
+    range: Range,
+    hourAxisFormatter: (Double) -> String,
+    dateAxisFormatter: (Double) -> String,
+    valueAxisFormatter: (Double) -> String,
+    markerFormatter: (x: Double, y: Double) -> String,
+    onDismiss: () -> Unit,
+) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) { detectTapGestures(onDoubleTap = { onDismiss() }) },
+            ) {
+                PriceChartView(
+                    dataPoints = dataPoints,
+                    lineColor = lineColor,
+                    xAxisFormatter = if (range == Range.ONE_DAY) hourAxisFormatter else dateAxisFormatter,
+                    yAxisFormatter = valueAxisFormatter,
+                    markerFormatter = markerFormatter,
+                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                )
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
+                ) {
+                    Text(text = "✕", style = MaterialTheme.typography.titleLarge)
+                }
+            }
         }
     }
 }
@@ -754,12 +810,12 @@ private fun QuoteDetailCard(
         ) {
             Text(
                 text = item.title,
-                style = MaterialTheme.typography.labelMedium
+                style = quoteElementStyle(QuoteElement.STAT_LABEL, MaterialTheme.typography.labelMedium)
             )
             Text(
                 modifier = Modifier.padding(top = 8.dp),
                 text = item.data,
-                style = MaterialTheme.typography.bodyLarge,
+                style = quoteElementStyle(QuoteElement.STAT_VALUE, MaterialTheme.typography.bodyLarge),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

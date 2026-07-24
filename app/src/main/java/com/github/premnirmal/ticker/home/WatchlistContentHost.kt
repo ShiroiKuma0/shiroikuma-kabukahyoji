@@ -11,12 +11,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.premnirmal.ticker.AppPreferences
+import com.github.premnirmal.ticker.ThemePage
 import com.github.premnirmal.ticker.detail.QuoteCard
 import com.github.premnirmal.ticker.navigation.HomeRoute
 import com.github.premnirmal.ticker.navigation.rememberScrollToTopAction
 import com.github.premnirmal.ticker.network.data.Quote
 import com.github.premnirmal.ticker.ui.ContentType
 import com.github.premnirmal.ticker.ui.LocalContentType
+import com.github.premnirmal.ticker.ui.PageThemeProvider
 import com.github.premnirmal.ticker.ui.fadingEdges
 import com.github.premnirmal.ticker.widget.WidgetData
 import com.github.premnirmal.tickerwidget.R
@@ -33,6 +35,17 @@ import java.util.Locale
  */
 @Composable
 fun WatchlistContent(
+    modifier: Modifier = Modifier,
+    viewModel: HomeViewModel,
+    onQuoteClick: (Quote) -> Unit,
+) {
+    PageThemeProvider(ThemePage.WATCHLIST) {
+        WatchlistContentInner(modifier, viewModel, onQuoteClick)
+    }
+}
+
+@Composable
+private fun WatchlistContentInner(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel,
     onQuoteClick: (Quote) -> Unit,

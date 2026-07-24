@@ -58,6 +58,11 @@ fun SettingsScreen(
     settingsData: SettingsData,
     // Strings
     settingsTitle: String,
+    // 白い熊 株価表示 UI (Appearance) entry — launches the fork's customization page (Android only;
+    // defaults to an empty title so non-Android callers simply omit the row).
+    appearanceTitle: String = "",
+    appearanceSubtitle: String = "",
+    onAppearance: () -> Unit = {},
     whatsNewTitle: String,
     whatsNewSubtitle: String,
     tutorialTitle: String,
@@ -203,6 +208,9 @@ fun SettingsScreen(
                 onPrivacyPolicy = onPrivacyPolicy,
                 onOpenSource = onOpenSource,
                 onVersionTap = onVersionTap,
+                appearanceTitle = appearanceTitle,
+                appearanceSubtitle = appearanceSubtitle,
+                onAppearance = onAppearance,
                 divider = divider,
                 versionFontFamily = versionFontFamily,
                 openSourceFontFamily = openSourceFontFamily,
@@ -264,10 +272,28 @@ private fun LazyListScope.settingsItems(
     onPrivacyPolicy: () -> Unit,
     onOpenSource: () -> Unit,
     onVersionTap: (Offset) -> Unit,
+    appearanceTitle: String,
+    appearanceSubtitle: String,
+    onAppearance: () -> Unit,
     divider: @Composable () -> Unit,
     versionFontFamily: FontFamily?,
     openSourceFontFamily: FontFamily?,
 ) {
+    // 白い熊 株価表示 UI (Appearance) — pinned to the top of Settings so the fork's colour/font
+    // customization page is the first thing reachable, like the pre-KMP fork. Omitted when the
+    // title is blank (non-Android callers).
+    if (appearanceTitle.isNotEmpty()) {
+        item {
+            SettingsText(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onAppearance() },
+                title = appearanceTitle,
+                subtitle = appearanceSubtitle,
+            )
+            divider()
+        }
+    }
     item {
         SettingsText(
             modifier = Modifier
