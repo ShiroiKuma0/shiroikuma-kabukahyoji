@@ -41,7 +41,9 @@ import com.github.premnirmal.ticker.debug.DbViewerActivity
 import com.github.premnirmal.ticker.home.HomeViewModel
 import com.github.premnirmal.ticker.navigation.HomeRoute
 import com.github.premnirmal.ticker.navigation.rememberScrollToTopAction
+import com.github.premnirmal.ticker.ThemePage
 import com.github.premnirmal.ticker.showDialog
+import com.github.premnirmal.ticker.ui.PageThemeProvider
 import com.github.premnirmal.ticker.ui.fadingEdges
 import com.github.premnirmal.tickerwidget.BuildConfig
 import com.github.premnirmal.tickerwidget.R
@@ -64,6 +66,17 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun SettingsScreen(
+    modifier: Modifier = Modifier,
+    homeViewModel: HomeViewModel,
+) {
+    PageThemeProvider(ThemePage.SETTINGS) {
+        SettingsScreenInner(modifier, homeViewModel)
+    }
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+private fun SettingsScreenInner(
     modifier: Modifier = Modifier,
     homeViewModel: HomeViewModel,
 ) {
@@ -185,6 +198,9 @@ fun SettingsScreen(
             CustomTabs.openTab(context, R.string.checkout_open_source, primaryColor.toArgb())
         },
         onVersionTap = { offset -> onVersionTap.onTap(offset) },
+        appearanceTitle = stringResource(id = R.string.shiroikuma_ui_title),
+        appearanceSubtitle = stringResource(id = R.string.ui_appearance_subtitle),
+        onAppearance = { context.startActivity(Intent(context, UiSettingsActivity::class.java)) },
         modifier = modifier,
         showAlarmPermissionRequest = showAlarmPermissionRequest,
         alarmPermissionBanner = { AlarmPermissionBanner() },

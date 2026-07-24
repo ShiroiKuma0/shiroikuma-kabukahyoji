@@ -11,6 +11,7 @@ import com.github.premnirmal.ticker.portfolio.NotesViewModel
 import com.github.premnirmal.ticker.portfolio.search.SearchViewModel
 import com.github.premnirmal.ticker.portfolio.search.SuggestionViewModel
 import com.github.premnirmal.ticker.settings.SettingsViewModel
+import com.github.premnirmal.ticker.settings.UiSettingsViewModel
 import com.github.premnirmal.ticker.ui.ThemeViewModel
 import com.github.premnirmal.ticker.widget.WidgetsViewModel
 import org.koin.android.ext.koin.androidApplication
@@ -39,6 +40,7 @@ val viewModelModule = module {
     }
     viewModel { SettingsViewModel(get(), get(), get(), get()) }
     viewModel { ThemeViewModel(get()) }
+    viewModel { UiSettingsViewModel(get()) }
     viewModel { DbViewerViewModel(androidApplication(), get(), get(), get()) }
     viewModel { SearchViewModel(get(), get(), get(), get()) }
     viewModel { DisplaynameViewModel(get(), get()) }
