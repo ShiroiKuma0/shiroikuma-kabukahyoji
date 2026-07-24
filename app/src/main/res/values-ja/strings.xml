@@ -212,4 +212,41 @@
   <string name="date_format_long">yyyy年MM月dd日</string>
    <string name="exact_alarm_permission_required_message">ウィジェットを適切なタイミングで更新するには、正確なアラームの権限が必要です。</string>
    <string name="go_to_settings">許可</string>
+
+  <!-- 白い熊 株価表示 UI (Phase 2) -->
+  <string name="ui_appearance">外観</string>
+  <string name="ui_appearance_subtitle">配色とフォントのカスタマイズ</string>
+  <string name="ui_section_colours">配色</string>
+  <string name="ui_section_font">フォント</string>
+  <string name="ui_dynamic_colour">ダイナミックカラー</string>
+  <string name="ui_dynamic_colour_desc">壁紙の Material You 配色を使用（Android 12 以降）</string>
+  <string name="ui_accent">アクセント</string>
+  <string name="ui_background">背景</string>
+  <string name="ui_text">文字</string>
+  <string name="ui_gain">上昇（プラス）</string>
+  <string name="ui_loss">下落（マイナス）</string>
+  <string name="ui_font">フォント</string>
+  <string name="ui_default">デフォルト</string>
+  <string name="ui_custom">カスタム</string>
+
+  <!-- 白い熊 株価表示 UI (Phase 3 — per-page / per-element) -->
+  <string name="ui_section_pages">ページ</string>
+  <string name="ui_page_global">全体</string>
+  <string name="ui_page_watchlist">ウォッチリスト</string>
+  <string name="ui_page_quote">銘柄詳細</string>
+  <string name="ui_page_settings">設定</string>
+  <string name="ui_heading">見出しテキスト</string>
+  <string name="ui_body">本文テキスト</string>
+  <string name="ui_section_elements">銘柄詳細の要素</string>
+  <string name="ui_colour">色</string>
+  <string name="ui_size">サイズ</string>
+  <string name="ui_inherit">継承</string>
+  <string name="ui_element_name">名称</string>
+  <string name="ui_element_price">価格</string>
+  <string name="ui_element_change">変化</string>
+  <string name="ui_element_stat_label">指標ラベル</string>
+  <string name="ui_element_stat_value">指標値</string>
+  <string name="ui_element_news">ニュース</string>
+  <string name="ui_language">言語</string>
+  <string name="ui_language_system">システム</string>
  </resources>

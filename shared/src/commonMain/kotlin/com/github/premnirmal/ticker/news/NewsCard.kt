@@ -23,6 +23,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.github.premnirmal.ticker.detail.QuoteElement
+import com.github.premnirmal.ticker.detail.quoteElementStyle
 import com.github.premnirmal.ticker.network.data.NewsArticle
 import com.github.premnirmal.tickerwidget.ui.AppCard
 import com.github.premnirmal.tickerwidget.ui.theme.SharedColours
@@ -61,7 +63,7 @@ fun NewsCard(
                     text = item.titleSanitized(),
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = quoteElementStyle(QuoteElement.NEWS, MaterialTheme.typography.bodyMedium)
                 )
                 item.imageUrl?.let {
                     var sizeImage by remember { mutableStateOf(IntSize.Zero) }

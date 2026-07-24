@@ -78,6 +78,11 @@
             android:name="com.github.premnirmal.ticker.debug.DbViewerActivity"
             android:theme="@style/DbViewerTheme" />
 
+        <activity
+            android:name="com.github.premnirmal.ticker.settings.UiSettingsActivity"
+            android:label="@string/shiroikuma_ui_title"
+            android:theme="@style/NewsFeedActivityTheme" />
+
         <receiver
             android:name="com.github.premnirmal.ticker.UpdateReceiver"
             android:enabled="true"
