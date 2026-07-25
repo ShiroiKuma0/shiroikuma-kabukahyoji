@@ -28,7 +28,8 @@ Everything this fork builds on top of [premnirmal/StockTicker](https://github.co
 - **Navigation rail icons yellow** (`#FFFF00`, dimmed when disabled), with a custom rail item that keeps the Material pill indicator and adds long-press support.
 - **Long-press the cog** (rail or glass bottom bar) to open the UI customization page.
 - **Launcher icon** restyled: yellow chart on black at 55 % size.
-- **Double-tap fullscreen chart** on the quote-detail price chart; Back or double-tap returns.
+- **Quote-detail layout options**: default two-pane, or **graph on top** with stats and news split side-by-side below — selectable in the UI page's Quote detail editor, persisted, and part of the settings export. **Long-press any chart** toggles the two layouts; in the wide list-detail view, graph-on-top expands the detail to the full page width (Back or another long-press returns).
+- **Double-tap fullscreen chart** on the quote-detail price chart; double-tap, long-press or Back returns.
 - Japanese translations for all fork strings.
 
 ## Fixes & behavior
