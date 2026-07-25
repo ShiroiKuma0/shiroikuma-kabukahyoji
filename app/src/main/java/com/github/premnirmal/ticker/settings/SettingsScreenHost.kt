@@ -37,11 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.premnirmal.ticker.CustomTabs
+import com.github.premnirmal.ticker.ThemePage
 import com.github.premnirmal.ticker.debug.DbViewerActivity
 import com.github.premnirmal.ticker.home.HomeViewModel
 import com.github.premnirmal.ticker.navigation.HomeRoute
 import com.github.premnirmal.ticker.navigation.rememberScrollToTopAction
-import com.github.premnirmal.ticker.ThemePage
 import com.github.premnirmal.ticker.showDialog
 import com.github.premnirmal.ticker.ui.PageThemeProvider
 import com.github.premnirmal.ticker.ui.fadingEdges
