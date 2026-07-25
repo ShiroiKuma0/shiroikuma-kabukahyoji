@@ -55,6 +55,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.input.pointer.pointerInput
@@ -199,6 +200,8 @@ fun QuoteDetailScreen(
     websiteLink: @Composable (website: String) -> Unit = {},
     listFadingEdges: (ScrollableState) -> Modifier = { Modifier },
     twoPane: (@Composable (first: @Composable () -> Unit, second: @Composable () -> Unit) -> Unit)? = null,
+    graphTop: Boolean = false,
+    onChartLongPress: (() -> Unit)? = null,
 ) {
     var showAddRemoveDialog by remember { mutableStateOf(false) }
     val state = rememberLazyGridState()
@@ -283,7 +286,63 @@ fun QuoteDetailScreen(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            if (twoPane == null) {
+            if (graphTop) {
+                // Graph-on-top layout: header + chart pinned above, stats and news split below.
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(horizontal = 8.dp)
+                ) {
+                    QuoteHeader(quote, chartData, changeColour)
+                    GraphItem(
+                        dataPoints = chartData?.dataPoints.orEmpty(),
+                        lineColor = changeColour,
+                        range = range,
+                        graphError = graphError,
+                        strings = strings,
+                        hourAxisFormatter = hourAxisFormatter,
+                        dateAxisFormatter = dateAxisFormatter,
+                        valueAxisFormatter = valueAxisFormatter,
+                        markerFormatter = markerFormatter,
+                        onRangeSelected = onRangeSelected,
+                        onLongPress = onChartLongPress,
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val leftState = rememberLazyGridState()
+                        LazyVerticalGrid(
+                            modifier = Modifier
+                                .weight(1f)
+                                .then(listFadingEdges(leftState)),
+                            columns = Fixed(1),
+                            state = leftState,
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            quoteDetailsGrid(details, card, onCardClick)
+                            quotePositionsNotesAlerts(
+                                quote, isInPortfolio, position, alertAbove, alertBelow, alertAboveText,
+                                alertBelowText, notes, displayname, strings, upColor, downColor, editIcon,
+                                card, onEditPositions, onEditAlerts, onEditNotes, onEditDisplayname
+                            )
+                            quoteBackground(website, longBusinessSummary, websiteLink)
+                            item { Spacer(modifier = Modifier.height(16.dp)) }
+                        }
+                        LazyVerticalGrid(
+                            modifier = Modifier.weight(1f),
+                            columns = Fixed(1),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            newsItems(articles, newsCard)
+                            item { Spacer(modifier = Modifier.height(16.dp)) }
+                        }
+                    }
+                }
+            } else if (twoPane == null) {
                 QuoteDetailGrid(
                     state = state,
                     padding = padding,
@@ -293,7 +352,7 @@ fun QuoteDetailScreen(
                     quoteInfo(
                         quote, chartData, changeColour, range, graphError, strings,
                         hourAxisFormatter, dateAxisFormatter, valueAxisFormatter, markerFormatter,
-                        onRangeSelected
+                        onRangeSelected, onChartLongPress
                     )
                     quoteDetailsGrid(details, card, onCardClick)
                     quotePositionsNotesAlerts(
@@ -319,7 +378,7 @@ fun QuoteDetailScreen(
                             quoteInfo(
                                 quote, chartData, changeColour, range, graphError, strings,
                                 hourAxisFormatter, dateAxisFormatter, valueAxisFormatter, markerFormatter,
-                                onRangeSelected
+                                onRangeSelected, onChartLongPress
                             )
                             quoteBackground(website, longBusinessSummary, websiteLink)
                             item {
@@ -418,23 +477,49 @@ private fun LazyGridScope.quoteInfo(
     valueAxisFormatter: (Double) -> String,
     markerFormatter: (x: Double, y: Double) -> String,
     onRangeSelected: (Range) -> Unit,
+    onChartLongPress: (() -> Unit)?,
+) {
+    item(span = {
+        GridItemSpan(maxLineSpan)
+    }) {
+        QuoteHeader(quote, chartData, changeColour)
+    }
+    item(span = {
+        GridItemSpan(maxLineSpan)
+    }) {
+        GraphItem(
+            dataPoints = chartData?.dataPoints.orEmpty(),
+            lineColor = changeColour,
+            range = range,
+            graphError = graphError,
+            strings = strings,
+            hourAxisFormatter = hourAxisFormatter,
+            dateAxisFormatter = dateAxisFormatter,
+            valueAxisFormatter = valueAxisFormatter,
+            markerFormatter = markerFormatter,
+            onRangeSelected = onRangeSelected,
+            onLongPress = onChartLongPress,
+        )
+    }
+}
+
+/** Name, price and change header — shared by the grid and the graph-on-top layout. */
+@Composable
+private fun QuoteHeader(
+    quote: Quote,
+    chartData: ChartData?,
+    changeColour: Color,
 ) {
     val lastTradePrice = quote.priceFormat.format(chartData?.regularMarketPrice ?: quote.lastTradePrice)
     val change = chartData?.changeStringWithSign() ?: quote.changeStringWithSign()
     val changePercent = chartData?.changePercentStringWithSign() ?: quote.changePercentStringWithSign()
-    item(span = {
-        GridItemSpan(maxLineSpan)
-    }) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = quote.name,
             style = quoteElementStyle(QuoteElement.NAME, MaterialTheme.typography.bodyLarge),
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
-    }
-    item(span = {
-        GridItemSpan(maxLineSpan)
-    }) {
         Text(
             text = lastTradePrice,
             style = quoteElementStyle(QuoteElement.PRICE, MaterialTheme.typography.titleLarge),
@@ -442,11 +527,7 @@ private fun LazyGridScope.quoteInfo(
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
-    }
-    item(span = {
-        GridItemSpan(maxLineSpan)
-    }) {
-        Row(horizontalArrangement = Arrangement.Center) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
             Text(
                 modifier = Modifier.padding(end = 4.dp),
                 text = change,
@@ -463,22 +544,6 @@ private fun LazyGridScope.quoteInfo(
             )
         }
     }
-    item(span = {
-        GridItemSpan(maxLineSpan)
-    }) {
-        GraphItem(
-            dataPoints = chartData?.dataPoints.orEmpty(),
-            lineColor = changeColour,
-            range = range,
-            graphError = graphError,
-            strings = strings,
-            hourAxisFormatter = hourAxisFormatter,
-            dateAxisFormatter = dateAxisFormatter,
-            valueAxisFormatter = valueAxisFormatter,
-            markerFormatter = markerFormatter,
-            onRangeSelected = onRangeSelected,
-        )
-    }
 }
 
 @Composable
@@ -493,6 +558,7 @@ private fun GraphItem(
     valueAxisFormatter: (Double) -> String,
     markerFormatter: (x: Double, y: Double) -> String,
     onRangeSelected: (Range) -> Unit,
+    onLongPress: (() -> Unit)? = null,
 ) {
     // Keep the chart from consuming the whole viewport in short (landscape) windows so the range
     // selector chips below it stay visible without scrolling. On tall windows (portrait / iPad) the
@@ -504,12 +570,18 @@ private fun GraphItem(
             .coerceIn(MinChartHeight, MaxChartHeight)
     }
     var fullscreen by remember { mutableStateOf(false) }
+    val currentLongPress by rememberUpdatedState(onLongPress)
     Column {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(chartHeight)
-                .pointerInput(Unit) { detectTapGestures(onDoubleTap = { fullscreen = true }) },
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = { fullscreen = true },
+                        onLongPress = { currentLongPress?.invoke() },
+                    )
+                },
             contentAlignment = Alignment.Center
         ) {
             if (!graphError && dataPoints.isEmpty()) {
@@ -598,7 +670,12 @@ private fun FullscreenChart(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .pointerInput(Unit) { detectTapGestures(onDoubleTap = { onDismiss() }) },
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onDoubleTap = { onDismiss() },
+                            onLongPress = { onDismiss() },
+                        )
+                    },
             ) {
                 PriceChartView(
                     dataPoints = dataPoints,

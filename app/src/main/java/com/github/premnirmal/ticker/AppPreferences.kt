@@ -103,6 +103,18 @@ class AppPreferences constructor(
         get() = store.getString(UI_LANGUAGE_TAG, "").orEmpty()
         set(value) { store.setString(UI_LANGUAGE_TAG, value) }
 
+    // Quote-detail layout: default two-pane, or graph pinned on top with stats/news split below.
+    // Toggled from the UI page or by long-pressing the chart; observed by the quote-detail hosts.
+    private val _uiQuoteLayout by lazy { MutableStateFlow(store.getInt(UI_QUOTE_LAYOUT, QUOTE_LAYOUT_DEFAULT)) }
+    val uiQuoteLayoutFlow: StateFlow<Int> get() = _uiQuoteLayout
+    var uiQuoteLayout: Int
+        get() = _uiQuoteLayout.value
+        set(value) {
+            _uiQuoteLayout.value = value
+            store.setInt(UI_QUOTE_LAYOUT, value)
+            bumpThemeVersion()
+        }
+
     // ---- Per-page keyed access ------------------------------------------------------------------
 
     private fun pageKey(page: ThemePage, attr: String) = "$PAGE_KEY_PREFIX${page.key}_$attr"
@@ -306,6 +318,9 @@ class AppPreferences constructor(
         const val UI_DYNAMIC_COLOUR = "UI_DYNAMIC_COLOUR"
         const val UI_RECENT_COLOURS = "UI_RECENT_COLOURS"
         const val UI_LANGUAGE_TAG = "UI_LANGUAGE_TAG"
+        const val UI_QUOTE_LAYOUT = "UI_QUOTE_LAYOUT"
+        const val QUOTE_LAYOUT_DEFAULT = 0
+        const val QUOTE_LAYOUT_GRAPH_TOP = 1
         const val PAGE_KEY_PREFIX = "UI_PAGE_"
         private const val RECENT_COLOURS_MAX = 18
 

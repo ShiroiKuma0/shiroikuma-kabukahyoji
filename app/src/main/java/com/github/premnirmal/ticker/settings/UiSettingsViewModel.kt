@@ -49,6 +49,12 @@ class UiSettingsViewModel(
     /** Effective size multiplier for the slider (page's own, else GLOBAL, else 1.0). */
     fun resolvedSize(page: ThemePage, attr: String): Float = appPreferences.resolvedSize(page, attr)
 
+    // Quote-detail layout (default two-pane vs graph-on-top split).
+    fun quoteLayout(): Int = appPreferences.uiQuoteLayout
+    fun setQuoteLayout(value: Int) {
+        appPreferences.uiQuoteLayout = value
+    }
+
     fun language(): String = appPreferences.uiLanguageTag
     fun setLanguage(tag: String) {
         appPreferences.uiLanguageTag = tag
