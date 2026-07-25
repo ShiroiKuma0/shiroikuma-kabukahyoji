@@ -23,8 +23,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.layout.DisplayFeature
 import com.github.premnirmal.ticker.AppPreferences
-import com.github.premnirmal.ticker.ThemePage
 import com.github.premnirmal.ticker.CustomTabs
+import com.github.premnirmal.ticker.ThemePage
 import com.github.premnirmal.ticker.navigation.calculateContentAndNavigationType
 import com.github.premnirmal.ticker.network.data.Quote
 import com.github.premnirmal.ticker.network.data.changeColour

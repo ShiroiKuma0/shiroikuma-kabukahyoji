@@ -222,7 +222,7 @@ private fun ColourSlider(label: String, value: Int, tint: Color, onChange: (Int)
 
 private fun toHex(color: Color): String {
     val argb = color.toArgb()
-    return String.format("%06X", 0xFFFFFF and argb)
+    return String.format(java.util.Locale.ROOT, "%06X", 0xFFFFFF and argb)
 }
 
 private fun parseHex(text: String): Color? {
