@@ -128,12 +128,18 @@ class AppPreferences constructor(
 
     /** Raw colour for (page, attr): the page's own value, no inheritance. Element attrs live here too. */
     fun getPageColour(page: ThemePage, attr: String): Int =
-        if (page == ThemePage.GLOBAL && attr in FIELD_COLOUR_ATTRS) globalColour(attr)
-        else store.getInt(pageKey(page, attr), COLOUR_UNSET)
+        if (page == ThemePage.GLOBAL && attr in FIELD_COLOUR_ATTRS) {
+            globalColour(attr)
+        } else {
+            store.getInt(pageKey(page, attr), COLOUR_UNSET)
+        }
 
     fun setPageColour(page: ThemePage, attr: String, value: Int) {
-        if (page == ThemePage.GLOBAL && attr in FIELD_COLOUR_ATTRS) setGlobalColour(attr, value)
-        else store.setInt(pageKey(page, attr), value)
+        if (page == ThemePage.GLOBAL && attr in FIELD_COLOUR_ATTRS) {
+            setGlobalColour(attr, value)
+        } else {
+            store.setInt(pageKey(page, attr), value)
+        }
         if (value != COLOUR_UNSET) addRecentColour(value)
         bumpThemeVersion()
     }
@@ -152,12 +158,18 @@ class AppPreferences constructor(
     }
 
     fun getPageFont(page: ThemePage, attr: String): String =
-        if (page == ThemePage.GLOBAL && attr in GLOBAL_FONT_ATTRS) globalFont(attr)
-        else store.getString(pageKey(page, attr), INHERIT_FONT) ?: INHERIT_FONT
+        if (page == ThemePage.GLOBAL && attr in GLOBAL_FONT_ATTRS) {
+            globalFont(attr)
+        } else {
+            store.getString(pageKey(page, attr), INHERIT_FONT) ?: INHERIT_FONT
+        }
 
     fun setPageFont(page: ThemePage, attr: String, value: String) {
-        if (page == ThemePage.GLOBAL && attr in GLOBAL_FONT_ATTRS) setGlobalFont(attr, value)
-        else store.setString(pageKey(page, attr), value)
+        if (page == ThemePage.GLOBAL && attr in GLOBAL_FONT_ATTRS) {
+            setGlobalFont(attr, value)
+        } else {
+            store.setString(pageKey(page, attr), value)
+        }
         bumpThemeVersion()
     }
 
@@ -175,12 +187,18 @@ class AppPreferences constructor(
     }
 
     fun getPageWeight(page: ThemePage, attr: String): Int =
-        if (page == ThemePage.GLOBAL && attr in GLOBAL_WEIGHT_ATTRS) globalWeight(attr)
-        else store.getInt(pageKey(page, attr), INHERIT_WEIGHT)
+        if (page == ThemePage.GLOBAL && attr in GLOBAL_WEIGHT_ATTRS) {
+            globalWeight(attr)
+        } else {
+            store.getInt(pageKey(page, attr), INHERIT_WEIGHT)
+        }
 
     fun setPageWeight(page: ThemePage, attr: String, value: Int) {
-        if (page == ThemePage.GLOBAL && attr in GLOBAL_WEIGHT_ATTRS) setGlobalWeight(attr, value)
-        else store.setInt(pageKey(page, attr), value)
+        if (page == ThemePage.GLOBAL && attr in GLOBAL_WEIGHT_ATTRS) {
+            setGlobalWeight(attr, value)
+        } else {
+            store.setInt(pageKey(page, attr), value)
+        }
         bumpThemeVersion()
     }
 

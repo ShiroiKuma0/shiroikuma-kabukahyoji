@@ -68,7 +68,14 @@ fun PageThemeProvider(page: ThemePage, content: @Composable () -> Unit) {
                 val colour = viewModel.elementColour("${element.name}_COLOUR")
                 val size = viewModel.elementSize("${element.name}_SIZE")
                 QuoteElementStyle(
-                    fontFamily = if (token == AppPreferences.INHERIT_FONT) null else FontManager.fontFamilyFor(context, token),
+                    fontFamily = if (token == AppPreferences.INHERIT_FONT) {
+                        null
+                    } else {
+                        FontManager.fontFamilyFor(
+                            context,
+                            token
+                        )
+                    },
                     fontWeight = if (weight > 0) FontWeight(weight) else null,
                     color = colour.toOverrideColour(),
                     scale = if (size > 0f) size else 0f,
