@@ -24,52 +24,59 @@ import androidx.compose.ui.platform.LocalContext
  * `PageThemeProvider` computes these and calls this per screen.
  */
 @Composable fun AppTheme(
-  theme: SelectedTheme,
-  useDynamicColour: Boolean = true,
-  colourOverrides: ThemeColourOverrides = ThemeColourOverrides(),
-  typography: Typography? = null,
-  content: @Composable () -> Unit
+    theme: SelectedTheme,
+    useDynamicColour: Boolean = true,
+    colourOverrides: ThemeColourOverrides = ThemeColourOverrides(),
+    typography: Typography? = null,
+    content: @Composable () -> Unit
 ) {
-  val isDark = when (theme) {
-    SelectedTheme.SYSTEM -> isSystemInDarkTheme()
-    SelectedTheme.LIGHT -> false
-    SelectedTheme.DARK -> true
-  }
-  val useDynamic = useDynamicColour && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-  val dynamicScheme: ColorScheme? = if (useDynamic) {
-    if (isDark) dynamicDarkColorScheme(LocalContext.current)
-    else dynamicLightColorScheme(LocalContext.current)
-  } else {
-    null
-  }
-
-  val hasSchemeOverride =
-    colourOverrides.accent.isSpecified || colourOverrides.background.isSpecified || colourOverrides.text.isSpecified
-  val colorSchemeOverride: ColorScheme? = if (hasSchemeOverride) {
-    val base = dynamicScheme ?: if (isDark) brandDarkColorScheme else brandLightColorScheme
-    base.withOverrides(colourOverrides)
-  } else {
-    dynamicScheme
-  }
-
-  SharedAppTheme(
-    theme = theme,
-    colorSchemeOverride = colorSchemeOverride,
-  ) {
-    CompositionLocalProvider(
-      LocalGainOverride provides colourOverrides.gain,
-      LocalLossOverride provides colourOverrides.loss,
-    ) {
-      if (typography != null) {
-        MaterialTheme(
-          colorScheme = MaterialTheme.colorScheme,
-          shapes = MaterialTheme.shapes,
-          typography = typography,
-          content = content,
-        )
-      } else {
-        content()
-      }
+    val isDark = when (theme) {
+        SelectedTheme.SYSTEM -> isSystemInDarkTheme()
+        SelectedTheme.LIGHT -> false
+        SelectedTheme.DARK -> true
     }
-  }
+    val useDynamic = useDynamicColour && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val dynamicScheme: ColorScheme? = if (useDynamic) {
+        if (isDark) {
+            dynamicDarkColorScheme(LocalContext.current)
+        } else {
+            dynamicLightColorScheme(LocalContext.current)
+        }
+    } else {
+        null
+    }
+
+    val hasSchemeOverride =
+        colourOverrides.accent.isSpecified || colourOverrides.background.isSpecified || colourOverrides.text.isSpecified
+    val base = dynamicScheme ?: if (isDark) brandDarkColorScheme else brandLightColorScheme
+    // 白い熊 fork: dark mode is pure black, not Material's greyish surfaces — the whole surface
+    // ladder is flattened to black so pages, dialogs, menus and sheets all render on black. The
+    // user's own background override (below) still wins.
+    val blackened = if (isDark) base.pureBlackSurfaces() else base
+    val colorSchemeOverride: ColorScheme = if (hasSchemeOverride) {
+        blackened.withOverrides(colourOverrides)
+    } else {
+        blackened
+    }
+
+    SharedAppTheme(
+        theme = theme,
+        colorSchemeOverride = colorSchemeOverride,
+    ) {
+        CompositionLocalProvider(
+            LocalGainOverride provides colourOverrides.gain,
+            LocalLossOverride provides colourOverrides.loss,
+        ) {
+            if (typography != null) {
+                MaterialTheme(
+                    colorScheme = MaterialTheme.colorScheme,
+                    shapes = MaterialTheme.shapes,
+                    typography = typography,
+                    content = content,
+                )
+            } else {
+                content()
+            }
+        }
+    }
 }

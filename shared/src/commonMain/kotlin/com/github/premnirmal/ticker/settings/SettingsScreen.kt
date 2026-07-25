@@ -1,6 +1,7 @@
 package com.github.premnirmal.ticker.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -24,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontFamily
@@ -132,7 +134,9 @@ fun SettingsScreen(
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
         modifier = modifier
-            .background(MaterialTheme.colorScheme.surface),
+            .background(MaterialTheme.colorScheme.surface)
+            // 白い熊 fork: the settings menu opened from the cog is framed with a yellow border.
+            .border(2.dp, Color(0xFFFFFF00)),
         topBar = {
             TopBar(text = settingsTitle)
         }
