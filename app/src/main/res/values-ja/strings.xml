@@ -249,6 +249,9 @@
   <string name="ui_element_news">ニュース</string>
   <string name="ui_language">言語</string>
   <string name="ui_language_system">システム</string>
+  <string name="ui_section_layout">レイアウト</string>
+  <string name="ui_layout_default">標準（2ペイン）</string>
+  <string name="ui_layout_graph_top">グラフを上、指標とニュースを下</string>
   <!-- Export / Import (白い熊 株価表示 UI page) -->
   <string name="eim_title">エクスポート / インポート</string>
   <string name="eim_desc">全設定のバックアップと復元</string>

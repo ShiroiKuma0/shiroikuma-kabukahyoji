@@ -200,7 +200,11 @@ private fun PageEditor(
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()),
         ) {
-            SectionHeader(stringResource(R.string.ui_section_colours), first = true)
+            if (page == ThemePage.QUOTE_DETAIL) {
+                SectionHeader(stringResource(R.string.ui_section_layout), first = true)
+                LayoutChips(viewModel)
+            }
+            SectionHeader(stringResource(R.string.ui_section_colours), first = page != ThemePage.QUOTE_DETAIL)
             COLOUR_ATTRS.forEach { (attr, labelRes) ->
                 val label = stringResource(labelRes)
                 ColourRow(label, viewModel.colour(page, attr)) { editingColour = ColourEdit(page, attr, label) }
@@ -454,6 +458,29 @@ private fun FontRow(label: String, value: String, onClick: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+/** Quote-detail layout choice: default two-pane, or graph on top with stats/news split below. */
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@Composable
+private fun LayoutChips(viewModel: UiSettingsViewModel) {
+    val options = listOf(
+        AppPreferences.QUOTE_LAYOUT_DEFAULT to stringResource(R.string.ui_layout_default),
+        AppPreferences.QUOTE_LAYOUT_GRAPH_TOP to stringResource(R.string.ui_layout_graph_top),
+    )
+    val current = viewModel.quoteLayout()
+    FlowRow(
+        modifier = Modifier.fillMaxWidth().padding(start = ITEM_INDENT, end = 16.dp, top = 4.dp, bottom = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        options.forEach { (value, label) ->
+            FilterChip(
+                selected = current == value,
+                onClick = { viewModel.setQuoteLayout(value) },
+                label = { Text(label) },
+            )
+        }
     }
 }
 
