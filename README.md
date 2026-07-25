@@ -10,7 +10,7 @@ A fork of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) wi
 
 Installs **side-by-side** with the official Stocks Widget (app id `shiroikuma.kabukahyoji`).
 
-**📥 Latest release: [`4.1.000+8`](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases)
+**📥 Latest release: [`4.1.000+10`](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases)
 
 </div>
 
@@ -32,7 +32,7 @@ Dark mode is genuinely black — the entire Material surface ladder is flattened
 ---
 
 ## 📈 Quote-detail extras
-Double-tap any price chart to open it full screen; Back returns to the detail view. The in-app language is switchable (system / English / 日本語) and persists across restarts.
+Two switchable layouts — the default two-pane, or **graph on top** with stats and news split below — selectable on the UI page or by **long-pressing any chart**; in the wide list-detail view, graph-on-top expands the detail to the full page width. Double-tap any price chart to open it full screen; Back returns to the detail view. The in-app language is switchable (system / English / 日本語) and persists across restarts.
 
 ---
 
