@@ -1,5 +1,6 @@
 package com.github.premnirmal.ticker.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,16 +34,25 @@ fun BottomSheetWithMessage(
     message: BottomSheetMessage,
     onDismissRequest: () -> Unit = {},
 ) {
+    // The sheet container is transparent and the visible body is this self-drawn box, so the yellow
+    // border hugs the sheet itself — a border on the ModalBottomSheet modifier frames the whole
+    // window instead.
     ModalBottomSheet(
-        modifier = Modifier.border(2.dp, SheetYellow, SheetShape),
         shape = SheetShape,
-        containerColor = SheetBlack,
-        dragHandle = {
-            BottomSheetHandle()
-        },
+        containerColor = Color.Transparent,
+        dragHandle = null,
         onDismissRequest = onDismissRequest,
     ) {
-        ModalBottomSheetWithMessage(message)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(SheetBlack, SheetShape)
+                .border(2.dp, SheetYellow, SheetShape),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            BottomSheetHandle()
+            ModalBottomSheetWithMessage(message)
+        }
     }
 }
 
