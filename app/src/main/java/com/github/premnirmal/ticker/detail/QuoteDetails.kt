@@ -15,7 +15,6 @@ import com.github.premnirmal.tickerwidget.R
  * here so the shared screen renders a fully-resolved [QuoteDetailItem].
  */
 fun buildQuoteDetails(summary: QuoteWithSummary, context: Context): List<QuoteDetailItem> {
-
     val quote = summary.quote
     val quoteSummary = summary.quoteSummary
     val details = mutableListOf<QuoteDetailItem>()
@@ -39,7 +38,7 @@ fun buildQuoteDetails(summary: QuoteWithSummary, context: Context): List<QuoteDe
         if (it > 0f) {
             details.add(
                 QuoteDetailItem(
-                context.getString(R.string.quote_details_fifty_day_average),
+                    context.getString(R.string.quote_details_fifty_day_average),
                     it.format()
                 )
             )
@@ -49,7 +48,7 @@ fun buildQuoteDetails(summary: QuoteWithSummary, context: Context): List<QuoteDe
         if (it > 0f) {
             details.add(
                 QuoteDetailItem(
-                context.getString(R.string.quote_details_two_hundred_day_average),
+                    context.getString(R.string.quote_details_two_hundred_day_average),
                     it.format()
                 )
             )
