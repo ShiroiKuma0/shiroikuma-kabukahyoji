@@ -249,4 +249,31 @@
   <string name="ui_element_news">ニュース</string>
   <string name="ui_language">言語</string>
   <string name="ui_language_system">システム</string>
+  <!-- Export / Import (白い熊 株価表示 UI page) -->
+  <string name="eim_title">エクスポート / インポート</string>
+  <string name="eim_desc">全設定のバックアップと復元</string>
+  <string name="eim_dir_label">エクスポート先ディレクトリ（タップして選択）</string>
+  <string name="eim_dir_unset">未設定 — タップしてディレクトリを選択</string>
+  <string name="eim_last">最終エクスポート: %1$s</string>
+  <string name="eim_warn_none">このディレクトリにはまだエクスポートがありません。</string>
+  <string name="eim_warn_nodir">ディレクトリが未設定です — ワンタップエクスポートには選択してください。</string>
+  <string name="eim_select_all">すべて選択</string>
+  <string name="eim_cat_general">一般設定</string>
+  <string name="eim_cat_appearance">外観・UI</string>
+  <string name="eim_cat_widgets">ウィジェット</string>
+  <string name="eim_cat_portfolio">ポートフォリオ（銘柄・ポジション）</string>
+  <string name="eim_cancel">キャンセル</string>
+  <string name="eim_import">インポート</string>
+  <string name="eim_export">エクスポート</string>
+  <string name="eim_ok">OK</string>
+  <string name="eim_export_done_title">✓ エクスポート完了</string>
+  <string name="eim_export_done_body">エクスポートしました: %1$s</string>
+  <string name="eim_import_done_title">✓ インポート完了</string>
+  <string name="eim_import_done_body">復元しました:\n\n%1$s\n\n全反映には再起動してください。</string>
+  <string name="eim_restart_now">今すぐ再起動</string>
+  <string name="eim_restart_later">後で</string>
+  <string name="eim_none_selected">カテゴリが選択されていません。</string>
+  <string name="eim_export_fail">エクスポート失敗: %1$s</string>
+  <string name="eim_import_fail">インポート失敗: %1$s</string>
+  <string name="eim_import_none">このファイルに白い熊 株価表示のエクスポートが見つかりません。</string>
  </resources>
