@@ -1,44 +1,49 @@
-# Stocks Widget
-[![Android](https://github.com/premnirmal/StockTicker/workflows/Android/badge.svg)](https://github.com/premnirmal/StockTicker/actions) [![Unit tests](https://github.com/premnirmal/StockTicker/workflows/Run%20unit%20tests/badge.svg)](https://github.com/premnirmal/StockTicker/actions) [![Detekt](https://github.com/premnirmal/StockTicker/workflows/Detekt/badge.svg)](https://github.com/premnirmal/StockTicker/actions) [![iOS](https://github.com/premnirmal/StockTicker/workflows/iOS/badge.svg)](https://github.com/premnirmal/StockTicker/actions)
+<div align="center">
 
-<a href="https://play.google.com/store/apps/details?id=com.github.premnirmal.tickerwidget" target="_blank">
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/500px-Google_Play_Store_badge_EN.svg.png" alt="Get it on Google Play" height="40"/>
-</a> 
-<a href="https://apps.apple.com/us/app/todaystocks/id993467855" target="_blank">
-<img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Available on the App Store" height="40"/>
-</a> 
-<a href="https://f-droid.org/en/packages/com.github.premnirmal.tickerwidget/" target="_blank">
-<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEslT1h9Dawi4R80LvhKKeLvCKNsi5nzvKmg&s" alt="Get it on F-Droid" height="40"/>
-</a>
+<img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png" width="120" alt="白い熊 株価表示 icon" />
 
-## App features
+# 白い熊 株価表示
 
-- A home screen widget that shows your stock portfolio in a resizable grid
-- Stocks can be sorted by dragging and dropping the list
-- Only performs automatic fetching of stocks during trading hours
-- Displays price change and summary alerts
+**A stocks watchlist and home-screen widget, rebuilt black-and-yellow and customizable down to every element.**
 
-## Kotlin Multiplatform
+A fork of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) with **major additions**: a full per-page / per-element UI customization page, settings export & import, a pure-black yellow-accented theme, and an in-app language switch.
 
-This project has been migrated to Kotlin Multiplatform (KMP) with shared Compose Multiplatform
-UI, so Android and iOS run from one shared codebase. Platform-agnostic code and the shared
-in-app screens live in the `:shared` module (`androidTarget` + iOS targets), with thin
-platform shells in `:app` (Android) and `iosApp` (iOS). See [MULTIPLATFORM.md](MULTIPLATFORM.md)
-for the module layout and the history of the migration. The iOS app is a thin SwiftUI shell that hosts the same shared
-Compose Multiplatform UI as Android, plus a native WidgetKit home-screen widget. It shares the
-full business logic (networking, persistence, preferences, background refresh) and the in-app
-screens (watchlist, trending, search, quote detail, settings) with Android via the `:shared`
-module. See [`iosApp/README.md`](iosApp/README.md) for build instructions.
+Installs **side-by-side** with the official Stocks Widget (app id `shiroikuma.kabukahyoji`).
 
-## Screenshots
-![](https://play-lh.googleusercontent.com/R9khJ5kNzXHUjO4BxNw1cNKTx62grZ7FtLRT_F2H0BhC99iuMWDxvuGTYvyydtqE3w=h400-rw)
-<img src="https://i.postimg.cc/dvjnChBZ/Screenshot-20260627-113556.png" height="400"/>
-<img src="https://github.com/user-attachments/assets/75e65d1d-70ac-4464-a2f3-d9b3674d226c" height="400"/>
-<img src="https://github.com/user-attachments/assets/cd0b7bae-26f3-44af-a3fc-339c76507471" height="400"/>
+**📥 Latest release: [`4.1.000+8`](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases)
 
-## License
+</div>
 
-GPL
+---
 
-### Author
-[Prem Nirmal](http://premnirmal.me/)
+## 🎨 The 白い熊 株価表示 UI page
+One page to restyle the whole app — per **page** (Global, Watchlist, Quote detail, Settings) set the accent, background, text, gain and loss colours, and the heading/body font, weight, colour and size multiplier. The Quote-detail page goes further with **per-element typography**: name, price, change, stat labels, stat values and news each get their own font, weight, colour and size. Import your own `.ttf`/`.otf` fonts, pick colours with RGBA sliders / hex / recent swatches, and watch every edit apply live. Styled kxkb-fashion: text-wide underlined headings on pure black, sections split by hairline spacers. Open it from Settings → Appearance, or **long-press the cog** on the main screen.
+
+---
+
+## 💾 Export / Import
+The first section of the UI page backs up **everything settable in the app** — general settings, appearance (including your imported fonts), widget configurations, and the portfolio — as a ZIP of per-category JSON. Pick a persistent export directory once and exports are one tap; the page shows the newest export found there every time it opens. Import merges only the categories you tick, then offers **Restart now / Later** in the fork's black, yellow-bordered dialogs.
+
+---
+
+## 🖤 Pure-black, yellow-accented theme
+Dark mode is genuinely black — the entire Material surface ladder is flattened to `#000000`, so the watchlist, every settings page, dialogs, menus and sheets all sit on black. The what's-new sheet and the settings page are framed in yellow, the navigation rail icons are yellow, and the launcher icon is a yellow chart on black.
+
+---
+
+## 📈 Quote-detail extras
+Double-tap any price chart to open it full screen; Back returns to the detail view. The in-app language is switchable (system / English / 日本語) and persists across restarts.
+
+---
+
+## Built on StockTicker
+A fork of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) (app id `shiroikuma.kabukahyoji`, so it coexists with the official build). Upstream provides the excellent resizable portfolio widget, Yahoo-Finance fetching during trading hours, alerts and news feed this fork builds on. The code remains under the GPL.
+
+## Building
+```bash
+git clone git@github.com:ShiroiKuma0/shiroikuma-kabukahyoji.git
+cd shiroikuma-kabukahyoji
+git checkout custom
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew buildFoss
+```
+`buildFoss` assembles the signed `purefoss` release (no Firebase/Crashlytics/Play services), copies the APK to `~/tmp/shiroikuma-kabukahyoji_<version>_arm64-v8a.apk`, and bumps the build number. Signing credentials go in `app/keystore.properties`; the SDK path in `local.properties`.
