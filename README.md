@@ -6,11 +6,11 @@
 
 **A stocks watchlist and home-screen widget, rebuilt black-and-yellow and customizable down to every element.**
 
-A fork of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) with **major additions**: a full per-page / per-element UI customization page, settings export & import, a pure-black yellow-accented theme, and an in-app language switch.
+A fork of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) with **major additions**: a full per-page / per-element UI customization page, settings export & import, one-command backup from 白い熊 自由作業盤, a pure-black yellow-accented theme, and an in-app language switch.
 
 Installs **side-by-side** with the official Stocks Widget (app id `shiroikuma.kabukahyoji`).
 
-**📥 Latest release: [`4.1.000+10`](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases)
+**📥 Latest release: [`4.1.000+11`](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases)
 
 </div>
 
@@ -22,7 +22,12 @@ One page to restyle the whole app — per **page** (Global, Watchlist, Quote det
 ---
 
 ## 💾 Export / Import
-The first section of the UI page backs up **everything settable in the app** — general settings, appearance (including your imported fonts), widget configurations, and the portfolio — as a ZIP of per-category JSON. Pick a persistent export directory once and exports are one tap; the page shows the newest export found there every time it opens. Import merges only the categories you tick, then offers **Restart now / Later** in the fork's black, yellow-bordered dialogs.
+The first section of the UI page backs up **everything settable in the app** — general settings, appearance (with custom fonts as a tickable sub-option), widget configurations, and the portfolio — as a single ZIP of per-category JSON, named `shiroikuma-kabukahyoji_<timestamp>.zip` so every 白い熊 app's backups sort together in one directory. Pick a persistent export directory once and exports are one tap; the page shows the newest export found there every time it opens. Import merges only the categories you tick, then offers **Restart now / Later** in the fork's black, yellow-bordered dialogs.
+
+---
+
+## 🤖 Backed up with every sister app — 保存復元
+Turn on **Automation export** at the bottom of the Export/Import section and this app joins 白い熊 自由作業盤's 保存復元 batch: one run backs up every sister app in turn. 自由作業盤 fires a token-gated broadcast, the app exports itself **headlessly** — no Activity, no tapping — and answers with the file it wrote, its exact byte count and a human-readable size, which the batch collects into one ✓/✗ summary. The caller can name the target directory, ask for a subset of categories, or query the category list first; while the export runs the app reports progress with **real counts** (`区分 3/5 — 外観・UI`), never a percentage. A 24-byte token, copied to the clipboard by tapping the token row and regenerable at will, is the only key — the switch defaults to off, and the token itself is kept out of every backup.
 
 ---
 
