@@ -293,6 +293,7 @@
   <string name="eim_cat_appearance">Appearance &amp; UI</string>
   <string name="eim_cat_widgets">Widgets</string>
   <string name="eim_cat_portfolio">Portfolio (tickers &amp; positions)</string>
+  <string name="eim_cat_fonts">Custom fonts</string>
   <string name="eim_cancel">Cancel</string>
   <string name="eim_import">Import</string>
   <string name="eim_export">Export</string>
@@ -307,4 +308,21 @@
   <string name="eim_export_fail">Export failed: %1$s</string>
   <string name="eim_import_fail">Import failed: %1$s</string>
   <string name="eim_import_none">No 白い熊 株価表示 export found in that file.</string>
+  <!-- 保存復元 automation (sister-app triggered headless export) -->
+  <string name="eim_auto_switch">Automation export</string>
+  <string name="eim_auto_switch_desc">Let sister-app tasks (白い熊 自由作業盤) trigger this app\'s export with the token-gated intent.</string>
+  <string name="eim_auto_token">Automation token</string>
+  <string name="eim_auto_token_hint">Tap to copy the full token</string>
+  <string name="eim_auto_copied">Automation token copied to the clipboard.</string>
+  <string name="eim_auto_regen">Regenerate</string>
+  <string name="eim_auto_regen_title">Regenerate the automation token?</string>
+  <string name="eim_auto_regen_body">The current token stops working at once. Every copy already pasted into another app — 自由作業盤\'s 「保存復元の設定 -- [979][01]」 — has to be updated with the new one.</string>
+  <string name="eim_auto_regen_done">A new automation token was generated.</string>
+  <string name="eim_auto_storage_title">Allow access to all files?</string>
+  <string name="eim_auto_storage_body">An automation export writes its ZIP to the directory the calling task names. Without all-files access this app can only write to the export directory chosen above.</string>
+  <string name="eim_auto_storage_grant">Open settings</string>
+  <string name="eim_auto_storage_later">Later</string>
+  <string name="eim_auto_progress">Categories %1$d/%2$d — %3$s</string>
+  <string name="eim_auto_progress_done">Categories %1$d/%2$d — done</string>
+  <string name="eim_auto_progress_unit">categories</string>
 </resources>

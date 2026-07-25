@@ -36,6 +36,7 @@ import java.util.zip.ZipOutputStream
  * user-chosen SAF directory whose tree URI is persisted in a device-local prefs file that is
  * itself never exported. Imports merge — they only touch keys present in the file.
  */
+@Suppress("TooManyFunctions") // one small export + import function per category, by design
 object SettingsExport : KoinComponent {
 
     /** An exportable settings category; [id] is the ZIP entry name, [labelRes] the checkbox label. */
@@ -46,10 +47,39 @@ object SettingsExport : KoinComponent {
         PORTFOLIO("portfolio", R.string.eim_cat_portfolio),
     }
 
-    const val EXPORT_PREFIX = "shiroikuma-kabukahyoji-"
+    /**
+     * A separately selectable part of a [Cat] — a sub-option of the 保存復元 contract: listed with
+     * its parent's id as a third field, and addressable on its own in the `items` extra.
+     */
+    enum class Sub(val id: String, val parent: Cat, @StringRes val labelRes: Int) {
+        FONTS("appearance.fonts", Cat.APPEARANCE, R.string.eim_cat_fonts),
+    }
+
+    /** A chosen set of export parts: whole categories plus the sub-options selected under them. */
+    data class Selection(val cats: Set<Cat>, val subs: Set<Sub>) {
+
+        /** The part ids, each parent before its own children — the manifest list and `items` vocabulary. */
+        val ids: List<String>
+            get() = Cat.entries.filter { it in cats }.flatMap { cat ->
+                listOf(cat.id) + Sub.entries.filter { it.parent == cat && it in subs }.map { it.id }
+            } + Sub.entries.filter { it in subs && it.parent !in cats }.map { it.id }
+
+        val size: Int get() = cats.size + subs.size
+
+        val isEmpty: Boolean get() = size == 0
+
+        companion object {
+            val ALL = Selection(Cat.entries.toSet(), Sub.entries.toSet())
+        }
+    }
+
+    // The family-wide backup name is "<english-app-name>_<yyyy-MM-dd_HH-mm-ss>.zip" — no version, no
+    // decoration, so every 白い熊 app's backups sort together in one directory.
+    const val EXPORT_PREFIX = "shiroikuma-kabukahyoji_"
+    private const val LEGACY_EXPORT_PREFIX = "shiroikuma-kabukahyoji-" // pre-2026-07-25 names
     private const val FORMAT = "kabukahyoji-export"
     private const val VERSION = 1
-    private const val EXIM_PREFS = "kabukahyoji_eximport" // device-local; never exported
+    internal const val EXIM_PREFS = "kabukahyoji_eximport" // device-local; never exported
     private const val KEY_DIR_URI = "dir_uri"
     private const val WIDGET_PREFS_PREFIX = "stocks_widget_"
     private const val FONTS_DIR_ENTRY = "fonts/"
@@ -88,11 +118,14 @@ object SettingsExport : KoinComponent {
     private fun latestExport(context: Context): DocumentFile? {
         val dir = exportDir(context) ?: return null
         return runCatching {
-            dir.listFiles().filter {
-                it.isFile && it.name?.startsWith(EXPORT_PREFIX) == true && it.name?.endsWith(".zip") == true
-            }.maxByOrNull { it.lastModified() }
+            dir.listFiles().filter { it.isFile && isExportName(it.name) }.maxByOrNull { it.lastModified() }
         }.getOrNull()
     }
+
+    /** Our own backups: the current name family, plus the pre-2026-07-25 one so old files still count. */
+    private fun isExportName(name: String?): Boolean =
+        name != null && name.endsWith(".zip") &&
+            (name.startsWith(EXPORT_PREFIX) || name.startsWith(LEGACY_EXPORT_PREFIX))
 
     /** (message, isWarning) for the "last export" line, queried when the page/panel opens. */
     fun lastExportStatus(context: Context): Pair<String, Boolean> {
@@ -105,47 +138,98 @@ object SettingsExport : KoinComponent {
     private fun fmtTs(t: Long) = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ROOT).format(Date(t))
 
     fun exportFileName(): String =
-        EXPORT_PREFIX + BuildConfig.VERSION_NAME + "-export_" +
-            SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ROOT).format(Date()) + ".zip"
+        EXPORT_PREFIX + SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ROOT).format(Date()) + ".zip"
+
+    // ---- The category list (also the LIST_CATEGORIES reply) ---------------------------------------
+
+    /** The `id<TAB>label[<TAB>parent-id]` lines of the automation contract's LIST_CATEGORIES reply. */
+    fun categoryLines(context: Context): String =
+        Cat.entries.flatMap { cat ->
+            listOf("${cat.id}\t${context.getString(cat.labelRes)}") +
+                Sub.entries.filter { it.parent == cat }
+                    .map { "${it.id}\t${context.getString(it.labelRes)}\t${cat.id}" }
+        }.joinToString("\n")
+
+    /** Ids in the comma-separated `items` extra that name neither a category nor a sub-option. */
+    fun unknownIds(items: String?): List<String> =
+        splitItems(items).filter { id -> Cat.entries.none { it.id == id } && Sub.entries.none { it.id == id } }
+
+    /** The selection named by an `items` extra; absent or empty selects everything. */
+    fun selectionOf(items: String?): Selection {
+        val ids = splitItems(items)
+        if (ids.isEmpty()) return Selection.ALL
+        return Selection(
+            cats = Cat.entries.filter { it.id in ids }.toSet(),
+            subs = Sub.entries.filter { it.id in ids }.toSet(),
+        )
+    }
+
+    private fun splitItems(items: String?): List<String> =
+        items?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }.orEmpty()
 
     // ---- Export -----------------------------------------------------------------------------------
 
-    /** Writes a ZIP of the selected categories to [out]. Returns a short human summary. */
-    fun export(context: Context, cats: Set<Cat>, out: OutputStream): String {
+    /**
+     * Writes a ZIP of [selection] to [out] — the headless core that both the Export/Import panel and
+     * [StateExportReceiver] call. [onProgress] gets `(current, total, label)` with real counts (never
+     * a percentage) before each part is written. Returns a short human summary.
+     */
+    fun export(
+        context: Context,
+        selection: Selection,
+        out: OutputStream,
+        onProgress: (current: Int, total: Int, label: String) -> Unit = { _, _, _ -> },
+    ): String {
         val lines = mutableListOf<String>()
+        val total = selection.size
+        var current = 0
         ZipOutputStream(out).use { zip ->
             val manifest = JSONObject()
                 .put("format", FORMAT)
                 .put("version", VERSION)
                 .put("app", context.packageName)
+                .put("appVersion", BuildConfig.VERSION_NAME)
                 .put("createdTs", System.currentTimeMillis())
-                .put("categories", JSONArray(cats.map { it.id }))
+                .put("categories", JSONArray(selection.ids))
             writeEntry(zip, "manifest.json", manifest.toString(JSON_INDENT))
 
-            for (cat in Cat.entries.filter { it in cats }) {
-                lines += when (cat) {
-                    Cat.GENERAL -> {
-                        writeEntry(zip, "${cat.id}.json", exportGeneral())
-                        context.getString(cat.labelRes)
-                    }
-                    Cat.APPEARANCE -> {
-                        writeEntry(zip, "${cat.id}.json", exportAppearance())
-                        val fonts = exportFonts(context, zip)
-                        context.getString(cat.labelRes) + if (fonts > 0) " (+$fonts fonts)" else ""
-                    }
-                    Cat.WIDGETS -> {
-                        writeEntry(zip, "${cat.id}.json", exportWidgets(context))
-                        context.getString(cat.labelRes)
-                    }
-                    Cat.PORTFOLIO -> {
-                        val portfolio = stocksProvider.portfolio.value
-                        writeEntry(zip, "${cat.id}.json", portfolioSerializer.serializePortfolio(portfolio))
-                        context.getString(cat.labelRes) + " (${portfolio.size})"
-                    }
-                }
+            for (cat in Cat.entries.filter { it in selection.cats }) {
+                onProgress(++current, total, context.getString(cat.labelRes))
+                lines += writeCategory(context, zip, cat)
+            }
+            for (sub in Sub.entries.filter { it in selection.subs }) {
+                onProgress(++current, total, context.getString(sub.labelRes))
+                lines += writeSub(context, zip, sub)
             }
         }
         return lines.joinToString("\n")
+    }
+
+    private fun writeCategory(context: Context, zip: ZipOutputStream, cat: Cat): String {
+        val label = context.getString(cat.labelRes)
+        return when (cat) {
+            Cat.GENERAL -> {
+                writeEntry(zip, "${cat.id}.json", exportGeneral())
+                label
+            }
+            Cat.APPEARANCE -> {
+                writeEntry(zip, "${cat.id}.json", exportAppearance())
+                label
+            }
+            Cat.WIDGETS -> {
+                writeEntry(zip, "${cat.id}.json", exportWidgets(context))
+                label
+            }
+            Cat.PORTFOLIO -> {
+                val portfolio = stocksProvider.portfolio.value
+                writeEntry(zip, "${cat.id}.json", portfolioSerializer.serializePortfolio(portfolio))
+                "$label (${portfolio.size})"
+            }
+        }
+    }
+
+    private fun writeSub(context: Context, zip: ZipOutputStream, sub: Sub): String = when (sub) {
+        Sub.FONTS -> "${context.getString(sub.labelRes)} (${exportFonts(context, zip)})"
     }
 
     private fun writeEntry(zip: ZipOutputStream, name: String, content: String) {
@@ -231,37 +315,43 @@ object SettingsExport : KoinComponent {
         val fromManifest = files["manifest.json"]?.let { bytes ->
             runCatching {
                 val arr = JSONObject(String(bytes)).getJSONArray("categories")
-                (0 until arr.length()).mapNotNull { i -> Cat.entries.firstOrNull { it.id == arr.getString(i) } }
+                (0 until arr.length()).mapNotNull { i -> catOf(arr.getString(i)) }.distinct()
             }.getOrNull()
         }
         return fromManifest ?: Cat.entries.filter { files.containsKey("${it.id}.json") }
     }
 
-    /** Applies the selected categories from an export ZIP. Returns a per-category summary. */
-    fun import(context: Context, zip: ByteArray, cats: Set<Cat>): String {
+    /** The category a part id belongs to: a [Cat] id itself, or the parent of a [Sub] id. */
+    private fun catOf(id: String): Cat? =
+        Cat.entries.firstOrNull { it.id == id } ?: Sub.entries.firstOrNull { it.id == id }?.parent
+
+    /** Applies the selected parts of an export ZIP, skipping absent ones. Returns a summary. */
+    fun import(context: Context, zip: ByteArray, selection: Selection): String {
         val files = readZip(zip)
         val lines = mutableListOf<String>()
-        for (cat in Cat.entries.filter { it in cats }) {
+        for (cat in Cat.entries.filter { it in selection.cats }) {
             val json = files["${cat.id}.json"] ?: continue
-            val line = runCatching {
-                when (cat) {
-                    Cat.GENERAL -> "${context.getString(cat.labelRes)}: ${importGeneral(String(json))}"
-                    Cat.APPEARANCE -> {
-                        val n = importAppearance(String(json))
-                        val fonts = importFonts(context, files)
-                        "${context.getString(cat.labelRes)}: $n" + if (fonts > 0) " (+$fonts fonts)" else ""
-                    }
-                    Cat.WIDGETS -> "${context.getString(cat.labelRes)}: ${importWidgets(context, String(json))}"
-                    Cat.PORTFOLIO -> {
-                        val portfolio = portfolioSerializer.deserializePortfolio(String(json))
-                        stocksProvider.addPortfolio(portfolio)
-                        "${context.getString(cat.labelRes)}: ${portfolio.size}"
-                    }
-                }
-            }.getOrElse { "${context.getString(cat.labelRes)}: ✗ ${it.message}" }
-            lines += line
+            lines += runCatching { "${context.getString(cat.labelRes)}: ${importCategory(context, cat, String(json))}" }
+                .getOrElse { "${context.getString(cat.labelRes)}: ✗ ${it.message}" }
+        }
+        for (sub in Sub.entries.filter { it in selection.subs }) {
+            val n = when (sub) {
+                Sub.FONTS -> importFonts(context, files)
+            }
+            if (n > 0) lines += "${context.getString(sub.labelRes)}: $n"
         }
         return lines.joinToString("\n")
+    }
+
+    private fun importCategory(context: Context, cat: Cat, json: String): String = when (cat) {
+        Cat.GENERAL -> importGeneral(json).toString()
+        Cat.APPEARANCE -> importAppearance(json).toString()
+        Cat.WIDGETS -> importWidgets(context, json).toString()
+        Cat.PORTFOLIO -> {
+            val portfolio = portfolioSerializer.deserializePortfolio(json)
+            stocksProvider.addPortfolio(portfolio)
+            portfolio.size.toString()
+        }
     }
 
     private fun importGeneral(json: String): Int {

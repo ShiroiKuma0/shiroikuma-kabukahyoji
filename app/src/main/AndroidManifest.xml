@@ -6,6 +6,10 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!-- The 保存復元 automation contract may name any absolute directory for the backup ZIP. -->
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
@@ -99,6 +103,17 @@
             android:name="com.github.premnirmal.ticker.notifications.DailySummaryNotificationReceiver"
             android:enabled="true"
             android:exported="false" />
+
+        <!-- 保存復元 automation: the token is the gate, so no android:permission (callers hold none). -->
+        <receiver
+            android:name="com.github.premnirmal.ticker.settings.StateExportReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="${applicationId}.action.EXPORT_STATE" />
+                <action android:name="${applicationId}.action.LIST_CATEGORIES" />
+            </intent-filter>
+        </receiver>
 
         <!-- Glance Widget -->
         <receiver android:name="com.github.premnirmal.ticker.widget.StockWidget"
