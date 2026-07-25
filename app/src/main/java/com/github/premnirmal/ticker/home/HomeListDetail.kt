@@ -1,5 +1,6 @@
 package com.github.premnirmal.ticker.home
 
+import android.content.Intent
 import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
@@ -8,6 +9,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -17,13 +19,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.window.layout.DisplayFeature
 import com.github.premnirmal.ticker.navigation.HomeBottomNavDestination
-import com.github.premnirmal.ticker.navigation.HomeNavigationActions
 import com.github.premnirmal.ticker.navigation.HomeNavHostWrapper
+import com.github.premnirmal.ticker.navigation.HomeNavigationActions
 import com.github.premnirmal.ticker.navigation.HomeRoute
 import com.github.premnirmal.ticker.navigation.HomeScaffold
 import com.github.premnirmal.ticker.navigation.LocalNavGraphViewModelStoreOwner
 import com.github.premnirmal.ticker.navigation.NavigationViewModel
 import com.github.premnirmal.ticker.navigation.calculateContentAndNavigationType
+import com.github.premnirmal.ticker.settings.UiSettingsActivity
 import com.github.premnirmal.ticker.ui.LocalAppMessaging
 import com.github.premnirmal.ticker.ui.LocalContentType
 import com.github.premnirmal.ticker.ui.NavigationContentPosition
@@ -70,6 +73,7 @@ fun HomeListDetail(
         }
         val viewModel: HomeViewModel = koinViewModel(viewModelStoreOwner = viewModelStoreOwner)
         val hasWidget = viewModel.hasWidget.collectAsState(initial = false)
+        val context = LocalContext.current
         val destinations = ArrayList<HomeBottomNavDestination>().apply {
             add(
                 HomeBottomNavDestination(
@@ -111,7 +115,11 @@ fun HomeListDetail(
                     HomeRoute.Settings,
                     selectedIcon = painterResource(id = drawable.ic_settings),
                     unselectedIcon = painterResource(id = drawable.ic_settings),
-                    label = stringResource(string.action_settings)
+                    label = stringResource(string.action_settings),
+                    // Long-press on the cog opens the 白い熊 株価表示 UI customization page.
+                    onLongPress = {
+                        context.startActivity(Intent(context, UiSettingsActivity::class.java))
+                    }
                 )
             )
         }
