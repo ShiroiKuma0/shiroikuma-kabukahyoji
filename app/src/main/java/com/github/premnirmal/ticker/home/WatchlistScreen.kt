@@ -11,8 +11,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.window.layout.DisplayFeature
+import com.github.premnirmal.ticker.AppPreferences
 import com.github.premnirmal.ticker.detail.QuoteDetailScreen
 import com.github.premnirmal.ticker.navigation.Graph
 import com.github.premnirmal.ticker.network.data.Quote
@@ -22,6 +24,7 @@ import com.github.premnirmal.ticker.ui.ContentType.SINGLE_PANE
 import com.github.premnirmal.ticker.ui.EmptyState
 import com.github.premnirmal.ticker.ui.ListDetail
 import com.github.premnirmal.tickerwidget.R
+import org.koin.compose.koinInject
 import java.net.URLEncoder
 
 @Composable
@@ -48,7 +51,24 @@ fun WatchlistScreen(
         SINGLE_PANE -> false
         DUAL_PANE -> true
     }
-    if (showListAndDetail) {
+    val appPreferences = koinInject<AppPreferences>()
+    val quoteLayout by appPreferences.uiQuoteLayoutFlow.collectAsStateWithLifecycle()
+    val graphTopQuote = selectedQuote
+    if (showListAndDetail && graphTopQuote != null && quoteLayout == AppPreferences.QUOTE_LAYOUT_GRAPH_TOP) {
+        // Graph-on-top mode takes the full page width (the list is hidden); long-press the chart
+        // again — or press Back — to return to the list-detail view.
+        BackHandler {
+            selectedQuote = null
+            isDetailOpen = false
+        }
+        QuoteDetailScreen(
+            modifier = modifier,
+            widthSizeClass = widthSizeClass,
+            contentType = SINGLE_PANE,
+            displayFeatures = displayFeatures,
+            quote = graphTopQuote
+        )
+    } else if (showListAndDetail) {
         ListDetail(
             modifier = modifier, isDetailOpen = isDetailOpen, setIsDetailOpen = {
                 if (!it) {

@@ -277,6 +277,9 @@
   <string name="ui_element_news">News</string>
   <string name="ui_language">Language</string>
   <string name="ui_language_system">System</string>
+  <string name="ui_section_layout">Layout</string>
+  <string name="ui_layout_default">Default (two pane)</string>
+  <string name="ui_layout_graph_top">Graph on top, stats and news below</string>
   <!-- Export / Import (白い熊 株価表示 UI page) -->
   <string name="eim_title">Export / Import</string>
   <string name="eim_desc">Back up or restore all app settings</string>

@@ -169,6 +169,7 @@ object SettingsExport : KoinComponent {
         val o = JSONObject()
             .put("dynamicColour", appPreferences.uiUseDynamicColour)
             .put("language", appPreferences.uiLanguageTag)
+            .put("quoteLayout", appPreferences.uiQuoteLayout)
             .put("recentColours", JSONArray(appPreferences.uiRecentColours))
         val pages = JSONObject()
         for (page in ThemePage.entries) {
@@ -323,6 +324,10 @@ object SettingsExport : KoinComponent {
         }
         if (o.has("language")) {
             appPreferences.uiLanguageTag = o.getString("language")
+            n++
+        }
+        if (o.has("quoteLayout")) {
+            appPreferences.uiQuoteLayout = o.getInt("quoteLayout")
             n++
         }
         o.optJSONArray("recentColours")?.let { arr ->
