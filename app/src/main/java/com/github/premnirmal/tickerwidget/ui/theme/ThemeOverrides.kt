@@ -36,3 +36,19 @@ fun ColorScheme.withOverrides(o: ThemeColourOverrides): ColorScheme {
     if (o.text.isSpecified) scheme = scheme.copy(onBackground = o.text, onSurface = o.text)
     return scheme
 }
+
+/**
+ * Flattens the whole Material surface ladder to pure black — dark mode in this fork is black, not
+ * Material's greyish elevated surfaces. Applied to backgrounds, surfaces and every surfaceContainer
+ * step so pages, dialogs, dropdown menus and bottom sheets all sit on black.
+ */
+fun ColorScheme.pureBlackSurfaces(): ColorScheme = copy(
+    background = Color.Black,
+    surface = Color.Black,
+    surfaceDim = Color.Black,
+    surfaceContainerLowest = Color.Black,
+    surfaceContainerLow = Color.Black,
+    surfaceContainer = Color.Black,
+    surfaceContainerHigh = Color.Black,
+    surfaceContainerHighest = Color.Black,
+)
