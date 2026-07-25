@@ -107,6 +107,7 @@ private fun QuoteDetailScreenInner(
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val showAddRemoveTooltip by viewModel.showAddRemoveTooltip.collectAsStateWithLifecycle(true)
     val chartData by viewModel.data.collectAsStateWithLifecycle()
+    val quoteLayout by appPreferences.uiQuoteLayoutFlow.collectAsStateWithLifecycle()
     val range by viewModel.range.collectAsStateWithLifecycle()
     val graphError by viewModel.dataFetchError.collectAsStateWithLifecycle()
     var isInPortfolio by remember(currentQuote, currentQuote.position) {
@@ -287,6 +288,16 @@ private fun QuoteDetailScreenInner(
                     second = second,
                 )
             }
+        },
+        // Graph-on-top takes precedence over the pane type; long-press the chart toggles layouts.
+        graphTop = quoteLayout == AppPreferences.QUOTE_LAYOUT_GRAPH_TOP,
+        onChartLongPress = {
+            appPreferences.uiQuoteLayout =
+                if (appPreferences.uiQuoteLayout == AppPreferences.QUOTE_LAYOUT_GRAPH_TOP) {
+                    AppPreferences.QUOTE_LAYOUT_DEFAULT
+                } else {
+                    AppPreferences.QUOTE_LAYOUT_GRAPH_TOP
+                }
         },
     )
 
