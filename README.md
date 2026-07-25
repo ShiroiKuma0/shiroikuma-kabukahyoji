@@ -1,34 +1,49 @@
-# Stocks Widget
-[![Build](https://github.com/premnirmal/StockTicker/workflows/Build/badge.svg)](https://github.com/premnirmal/StockTicker/actions) [![Unit tests](https://github.com/premnirmal/StockTicker/workflows/Run%20unit%20tests/badge.svg)](https://github.com/premnirmal/StockTicker/actions)
+<div align="center">
 
-<a href="https://play.google.com/store/apps/details?id=com.github.premnirmal.tickerwidget" target="_blank">
-<img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png" alt="Get it on Google Play" height="90"/></a>
+<img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png" width="120" alt="白い熊 株価表示 icon" />
 
-<a href="https://f-droid.org/en/packages/com.github.premnirmal.tickerwidget/" target="_blank">
-<img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid" height="90"/></a>
+# 白い熊 株価表示
 
+**A stocks watchlist and home-screen widget, rebuilt black-and-yellow and customizable down to every element.**
 
-![](https://play-lh.googleusercontent.com/R9khJ5kNzXHUjO4BxNw1cNKTx62grZ7FtLRT_F2H0BhC99iuMWDxvuGTYvyydtqE3w=h400-rw)
-![](https://play-lh.googleusercontent.com/uxQfuEmietfmyq4e-xNEAXfwtkWFE9iVbJYpMtc55yKqOYTv25ViSGS1dTf6qrncXIo=h400-rw)
-![](https://play-lh.googleusercontent.com/fQZFK93aeUVMr0BDNIuk8Ol9i-HC4d7GCtk01VtKr2-qcdtpmR8gO3-DJMCPbTwsCA=h400-rw)
+A fork of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) with **major additions**: a full per-page / per-element UI customization page, settings export & import, a pure-black yellow-accented theme, and an in-app language switch.
 
-## App features
+Installs **side-by-side** with the official Stocks Widget (app id `shiroikuma.kabukahyoji`).
 
-- A home screen widget that shows your stock portfolio in a resizable grid
-- Stocks can be sorted by dragging and dropping the list
-- Only performs automatic fetching of stocks during trading hours
-- Displays price change and summary alerts
+**📥 Latest release: [`4.1.000+8`](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases)
 
-## Kotlin Multiplatform
+</div>
 
-This project is being incrementally migrated to Kotlin Multiplatform (KMP) with planned
-iOS support. Platform-agnostic code lives in the `:shared` module
-(`androidTarget` + iOS targets). See [MULTIPLATFORM.md](MULTIPLATFORM.md) for the module
-layout, current status, and the migration roadmap.
+---
 
-## License
+## 🎨 The 白い熊 株価表示 UI page
+One page to restyle the whole app — per **page** (Global, Watchlist, Quote detail, Settings) set the accent, background, text, gain and loss colours, and the heading/body font, weight, colour and size multiplier. The Quote-detail page goes further with **per-element typography**: name, price, change, stat labels, stat values and news each get their own font, weight, colour and size. Import your own `.ttf`/`.otf` fonts, pick colours with RGBA sliders / hex / recent swatches, and watch every edit apply live. Styled kxkb-fashion: text-wide underlined headings on pure black, sections split by hairline spacers. Open it from Settings → Appearance, or **long-press the cog** on the main screen.
 
-GPL
+---
 
-### Author
-[Prem Nirmal](http://premnirmal.me/)
+## 💾 Export / Import
+The first section of the UI page backs up **everything settable in the app** — general settings, appearance (including your imported fonts), widget configurations, and the portfolio — as a ZIP of per-category JSON. Pick a persistent export directory once and exports are one tap; the page shows the newest export found there every time it opens. Import merges only the categories you tick, then offers **Restart now / Later** in the fork's black, yellow-bordered dialogs.
+
+---
+
+## 🖤 Pure-black, yellow-accented theme
+Dark mode is genuinely black — the entire Material surface ladder is flattened to `#000000`, so the watchlist, every settings page, dialogs, menus and sheets all sit on black. The what's-new sheet and the settings page are framed in yellow, the navigation rail icons are yellow, and the launcher icon is a yellow chart on black.
+
+---
+
+## 📈 Quote-detail extras
+Double-tap any price chart to open it full screen; Back returns to the detail view. The in-app language is switchable (system / English / 日本語) and persists across restarts.
+
+---
+
+## Built on StockTicker
+A fork of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) (app id `shiroikuma.kabukahyoji`, so it coexists with the official build). Upstream provides the excellent resizable portfolio widget, Yahoo-Finance fetching during trading hours, alerts and news feed this fork builds on. The code remains under the GPL.
+
+## Building
+```bash
+git clone git@github.com:ShiroiKuma0/shiroikuma-kabukahyoji.git
+cd shiroikuma-kabukahyoji
+git checkout custom
+JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 ./gradlew buildFoss
+```
+`buildFoss` assembles the signed `purefoss` release (no Firebase/Crashlytics/Play services), copies the APK to `~/tmp/shiroikuma-kabukahyoji_<version>_arm64-v8a.apk`, and bumps the build number. Signing credentials go in `app/keystore.properties`; the SDK path in `local.properties`.
