@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,11 +17,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +33,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,9 +42,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.premnirmal.ticker.AppPreferences
 import com.github.premnirmal.ticker.ThemePage
@@ -86,16 +94,26 @@ fun UiSettingsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Hub(
-    version: Int,
+    @Suppress("UnusedParameter") version: Int, // forces recomposition on theme edits
     viewModel: UiSettingsViewModel,
     onBack: () -> Unit,
     onSelectPage: (ThemePage) -> Unit,
     modifier: Modifier,
 ) {
-    Scaffold(modifier = modifier, topBar = { TopBar(text = stringResource(R.string.shiroikuma_ui_title), navigationIcon = { BackButton(onBack) }) }) { padding ->
+    val context = LocalContext.current
+    var showExim by remember { mutableStateOf(false) }
+    var eximTick by remember { mutableIntStateOf(0) }
+    // The settable export directory is queried for the latest export whenever the page (re)opens.
+    val lastExport = remember(eximTick) { SettingsExport.lastExportStatus(context) }
+
+    Scaffold(modifier = modifier, topBar = {
+        TopBar(text = stringResource(R.string.shiroikuma_ui_title), navigationIcon = { BackButton(onBack) })
+    }) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()),
         ) {
+            SectionHeader(stringResource(R.string.eim_title), first = true)
+            ExportImportRow(status = lastExport) { showExim = true }
             SectionHeader(stringResource(R.string.ui_section_colours))
             SwitchRow(
                 label = stringResource(R.string.ui_dynamic_colour),
@@ -113,6 +131,46 @@ private fun Hub(
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
+
+    if (showExim) {
+        ExportImportPanel(
+            onDismiss = {
+                showExim = false
+                eximTick++
+            },
+            onCloseAll = {
+                showExim = false
+                onBack()
+            },
+        )
+    }
+}
+
+@Composable
+private fun ExportImportRow(status: Pair<String, Boolean>, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+            .padding(start = ITEM_INDENT, end = 16.dp, top = 6.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = stringResource(R.string.eim_desc), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = status.first,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (status.second) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            )
+        }
+        Text(
+            text = "›",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
 }
 
 private val COLOUR_ATTRS = listOf(
@@ -127,7 +185,7 @@ private val COLOUR_ATTRS = listOf(
 @Composable
 private fun PageEditor(
     page: ThemePage,
-    version: Int,
+    @Suppress("UnusedParameter") version: Int, // forces recomposition on theme edits
     viewModel: UiSettingsViewModel,
     onBack: () -> Unit,
     modifier: Modifier,
@@ -136,11 +194,13 @@ private fun PageEditor(
     var editingFont by remember { mutableStateOf<FontEdit?>(null) }
     val nonGlobal = page != ThemePage.GLOBAL
 
-    Scaffold(modifier = modifier, topBar = { TopBar(text = stringResource(pageTitle(page)), navigationIcon = { BackButton(onBack) }) }) { padding ->
+    Scaffold(modifier = modifier, topBar = {
+        TopBar(text = stringResource(pageTitle(page)), navigationIcon = { BackButton(onBack) })
+    }) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()),
         ) {
-            SectionHeader(stringResource(R.string.ui_section_colours))
+            SectionHeader(stringResource(R.string.ui_section_colours), first = true)
             COLOUR_ATTRS.forEach { (attr, labelRes) ->
                 val label = stringResource(labelRes)
                 ColourRow(label, viewModel.colour(page, attr)) { editingColour = ColourEdit(page, attr, label) }
@@ -163,11 +223,7 @@ private fun PageEditor(
             if (page == ThemePage.QUOTE_DETAIL) {
                 SectionHeader(stringResource(R.string.ui_section_elements))
                 QuoteElement.entries.forEach { element ->
-                    Text(
-                        text = stringResource(elementLabel(element)),
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.padding(start = 16.dp, top = 8.dp),
-                    )
+                    SubHeader(stringResource(elementLabel(element)))
                     StyleGroup(
                         page, "${element.name}_FONT", "${element.name}_WEIGHT",
                         "${element.name}_COLOUR", "${element.name}_SIZE", includeInherit = true, viewModel,
@@ -186,8 +242,14 @@ private fun PageEditor(
             initial = if (current == COLOUR_UNSET) null else Color(current),
             recentColours = viewModel.recentColours().map { Color(it) },
             onDismiss = { editingColour = null },
-            onUseDefault = { viewModel.setColour(edit.page, edit.attr, COLOUR_UNSET); editingColour = null },
-            onPick = { viewModel.setColour(edit.page, edit.attr, it.toArgb()); editingColour = null },
+            onUseDefault = {
+                viewModel.setColour(edit.page, edit.attr, COLOUR_UNSET)
+                editingColour = null
+            },
+            onPick = {
+                viewModel.setColour(edit.page, edit.attr, it.toArgb())
+                editingColour = null
+            },
         )
     }
     editingFont?.let { edit ->
@@ -196,7 +258,10 @@ private fun PageEditor(
             selectedToken = viewModel.font(edit.page, edit.attr),
             includeInherit = edit.includeInherit,
             onDismiss = { editingFont = null },
-            onSelect = { viewModel.setFont(edit.page, edit.attr, it); editingFont = null },
+            onSelect = {
+                viewModel.setFont(edit.page, edit.attr, it)
+                editingFont = null
+            },
         )
     }
 }
@@ -226,7 +291,7 @@ private fun StyleGroup(
     }
     val selectedWeight = viewModel.weight(page, weightAttr)
     FlowRow(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = ITEM_INDENT, end = 16.dp, top = 4.dp, bottom = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         weightOptions.forEach { option ->
@@ -239,11 +304,14 @@ private fun StyleGroup(
     }
 
     val colourLabel = stringResource(R.string.ui_colour)
-    ColourRow(colourLabel, viewModel.colour(page, colourAttr)) { onEditColour(ColourEdit(page, colourAttr, colourLabel)) }
+    ColourRow(
+        colourLabel,
+        viewModel.colour(page, colourAttr)
+    ) { onEditColour(ColourEdit(page, colourAttr, colourLabel)) }
 
     val size = viewModel.resolvedSize(page, sizeAttr)
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = ITEM_INDENT, end = 16.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(text = stringResource(R.string.ui_size), style = MaterialTheme.typography.bodyMedium)
@@ -280,36 +348,71 @@ private fun BackButton(onBack: () -> Unit) {
     }
 }
 
+// kxkb page geometry: heading indent, sub-heading indent, item indent (see the kxkb UI page).
+private val HEADING_INDENT = 36.dp
+private val SUB_INDENT = 54.dp
+private val ITEM_INDENT = 72.dp
+
+/**
+ * kxkb-style section heading: a full-width hairline separator above the group (skipped for the
+ * first section), then a big bold heading underlined only as wide as its own text.
+ */
 @Composable
-private fun SectionHeader(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 4.dp),
-    )
+private fun SectionHeader(text: String, first: Boolean = false) {
+    val accent = MaterialTheme.colorScheme.primary
+    Column(modifier = Modifier.fillMaxWidth().padding(top = if (first) 12.dp else 10.dp, bottom = 2.dp)) {
+        if (!first) HorizontalDivider(thickness = Dp.Hairline, color = accent)
+        Column(modifier = Modifier.padding(start = HEADING_INDENT, top = 8.dp).width(IntrinsicSize.Max)) {
+            Text(text = text, color = accent, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Box(
+                modifier = Modifier.padding(top = 2.dp).fillMaxWidth().height(2.5.dp).background(accent),
+            )
+        }
+    }
+}
+
+/** kxkb-style sub-heading: smaller, deeper-indented, with a thinner text-wide underline. */
+@Composable
+private fun SubHeader(text: String) {
+    val accent = MaterialTheme.colorScheme.primary
+    Column(
+        modifier = Modifier.padding(start = SUB_INDENT, top = 10.dp, bottom = 2.dp).width(IntrinsicSize.Max),
+    ) {
+        Text(text = text, color = accent, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+        Box(modifier = Modifier.padding(top = 2.dp).fillMaxWidth().height(1.5.dp).background(accent))
+    }
 }
 
 @Composable
 private fun PageRow(label: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+            .padding(start = ITEM_INDENT, end = 16.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(text = label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-        Text(text = "›", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            text = "›",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
 @Composable
 private fun SwitchRow(label: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable { onChange(!checked) }.padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().clickable { onChange(!checked) }
+            .padding(start = ITEM_INDENT, end = 16.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(text = label, style = MaterialTheme.typography.bodyLarge)
-            Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         Switch(checked = checked, onCheckedChange = onChange)
     }
@@ -318,7 +421,8 @@ private fun SwitchRow(label: String, subtitle: String, checked: Boolean, onChang
 @Composable
 private fun ColourRow(label: String, value: Int, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+            .padding(start = ITEM_INDENT, end = 16.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(text = label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
@@ -340,11 +444,16 @@ private fun ColourRow(label: String, value: Int, onClick: () -> Unit) {
 @Composable
 private fun FontRow(label: String, value: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+            .padding(start = ITEM_INDENT, end = 16.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(text = label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-        Text(text = value, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -354,7 +463,7 @@ private fun LanguageChips(viewModel: UiSettingsViewModel) {
     val current = viewModel.language()
     val systemLabel = stringResource(R.string.ui_language_system)
     FlowRow(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = ITEM_INDENT, end = 16.dp, top = 4.dp, bottom = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         LANGUAGE_OPTIONS.forEach { option ->
