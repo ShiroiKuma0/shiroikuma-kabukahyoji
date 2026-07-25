@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -79,7 +80,7 @@ fun ExportImportPanel(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var statusTick by remember { mutableIntStateOf(0) }
-    val checked = remember { mutableStateOf(SettingsExport.Cat.entries.toSet()) }
+    var selection by remember { mutableStateOf(SettingsExport.Selection.ALL) }
     var result by remember { mutableStateOf<EximResult?>(null) }
 
     val dirName = remember(statusTick) { SettingsExport.dirDisplayName(context) }
@@ -101,7 +102,7 @@ fun ExportImportPanel(
                 context = context,
                 write = { name ->
                     context.contentResolver.openOutputStream(uri)?.use { os ->
-                        SettingsExport.export(context, checked.value, os)
+                        SettingsExport.export(context, selection, os)
                     } ?: error("no output stream")
                     name
                 },
@@ -113,7 +114,7 @@ fun ExportImportPanel(
         }
     }
     val importOpen = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) runImport(context, scope, uri, checked.value) { result = it }
+        if (uri != null) runImport(context, scope, uri, selection) { result = it }
     }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -159,17 +160,28 @@ fun ExportImportPanel(
 
                 EximDivider()
 
-                val all = checked.value.size == SettingsExport.Cat.entries.size
                 CheckRow(
                     label = stringResource(R.string.eim_select_all),
-                    checkedState = all,
+                    checkedState = selection == SettingsExport.Selection.ALL,
                     bold = true,
                 ) { on ->
-                    checked.value = if (on) SettingsExport.Cat.entries.toSet() else emptySet()
+                    selection = if (on) SettingsExport.Selection.ALL else NOTHING_SELECTED
                 }
                 SettingsExport.Cat.entries.forEach { cat ->
-                    CheckRow(label = stringResource(cat.labelRes), checkedState = cat in checked.value) { on ->
-                        checked.value = if (on) checked.value + cat else checked.value - cat
+                    CheckRow(label = stringResource(cat.labelRes), checkedState = cat in selection.cats) { on ->
+                        selection = toggleCat(selection, cat, on)
+                    }
+                    // Sub-options sit indented under their parent, as in the sister apps' pickers.
+                    SettingsExport.Sub.entries.filter { it.parent == cat }.forEach { sub ->
+                        CheckRow(
+                            label = stringResource(sub.labelRes),
+                            checkedState = sub in selection.subs,
+                            indent = 24.dp,
+                        ) { on ->
+                            selection = selection.copy(
+                                subs = if (on) selection.subs + sub else selection.subs - sub,
+                            )
+                        }
                     }
                 }
 
@@ -183,7 +195,7 @@ fun ExportImportPanel(
                     Pill(stringResource(R.string.eim_cancel), onClick = onDismiss)
                     Spacer(modifier = Modifier.weight(1f))
                     Pill(stringResource(R.string.eim_import)) {
-                        if (checked.value.isEmpty()) {
+                        if (selection.isEmpty) {
                             result = EximResult.Failure(noneSelectedMsg)
                         } else {
                             importOpen.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
@@ -193,7 +205,7 @@ fun ExportImportPanel(
                     Pill(stringResource(R.string.eim_export)) {
                         val dir = SettingsExport.exportDir(context)
                         when {
-                            checked.value.isEmpty() -> result = EximResult.Failure(noneSelectedMsg)
+                            selection.isEmpty -> result = EximResult.Failure(noneSelectedMsg)
                             dir == null -> exportCreate.launch(SettingsExport.exportFileName())
                             else -> runExport(
                                 scope = scope,
@@ -202,7 +214,7 @@ fun ExportImportPanel(
                                     val file = dir.createFile("application/zip", name)
                                         ?: error("could not create file in folder")
                                     context.contentResolver.openOutputStream(file.uri)?.use { os ->
-                                        SettingsExport.export(context, checked.value, os)
+                                        SettingsExport.export(context, selection, os)
                                     } ?: error("no output stream")
                                     name
                                 },
@@ -317,10 +329,11 @@ private fun CheckRow(
     label: String,
     checkedState: Boolean,
     bold: Boolean = false,
+    indent: Dp = 0.dp,
     onChange: (Boolean) -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable { onChange(!checkedState) },
+        modifier = Modifier.fillMaxWidth().padding(start = indent).clickable { onChange(!checkedState) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(
@@ -339,6 +352,21 @@ private fun CheckRow(
             fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
         )
     }
+}
+
+private val NOTHING_SELECTED = SettingsExport.Selection(emptySet(), emptySet())
+
+/** Toggling a category carries its sub-options with it; a sub-option can still be toggled on its own. */
+private fun toggleCat(
+    selection: SettingsExport.Selection,
+    cat: SettingsExport.Cat,
+    on: Boolean,
+): SettingsExport.Selection {
+    val subs = SettingsExport.Sub.entries.filter { it.parent == cat }.toSet()
+    return SettingsExport.Selection(
+        cats = if (on) selection.cats + cat else selection.cats - cat,
+        subs = if (on) selection.subs + subs else selection.subs - subs,
+    )
 }
 
 private fun runExport(
@@ -364,7 +392,7 @@ private fun runImport(
     context: Context,
     scope: CoroutineScope,
     uri: Uri,
-    cats: Set<SettingsExport.Cat>,
+    selection: SettingsExport.Selection,
     onDone: (EximResult) -> Unit,
 ) {
     scope.launch {
@@ -375,7 +403,7 @@ private fun runImport(
                 require(SettingsExport.categoriesIn(bytes).isNotEmpty()) {
                     context.getString(R.string.eim_import_none)
                 }
-                SettingsExport.import(context, bytes, cats)
+                SettingsExport.import(context, bytes, selection)
             }
         }
         onDone(
