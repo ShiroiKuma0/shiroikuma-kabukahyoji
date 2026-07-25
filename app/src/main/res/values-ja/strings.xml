@@ -265,6 +265,7 @@
   <string name="eim_cat_appearance">外観・UI</string>
   <string name="eim_cat_widgets">ウィジェット</string>
   <string name="eim_cat_portfolio">ポートフォリオ（銘柄・ポジション）</string>
+  <string name="eim_cat_fonts">カスタムフォント</string>
   <string name="eim_cancel">キャンセル</string>
   <string name="eim_import">インポート</string>
   <string name="eim_export">エクスポート</string>
@@ -279,4 +280,21 @@
   <string name="eim_export_fail">エクスポート失敗: %1$s</string>
   <string name="eim_import_fail">インポート失敗: %1$s</string>
   <string name="eim_import_none">このファイルに白い熊 株価表示のエクスポートが見つかりません。</string>
+  <!-- 保存復元 automation (sister-app triggered headless export) -->
+  <string name="eim_auto_switch">自動エクスポート</string>
+  <string name="eim_auto_switch_desc">姉妹アプリのタスク（白い熊 自由作業盤）がトークン付きインテントでこのアプリのエクスポートを起動できるようにします。</string>
+  <string name="eim_auto_token">自動化トークン</string>
+  <string name="eim_auto_token_hint">タップで全文をコピー</string>
+  <string name="eim_auto_copied">自動化トークンをクリップボードにコピーしました。</string>
+  <string name="eim_auto_regen">再生成</string>
+  <string name="eim_auto_regen_title">自動化トークンを再生成しますか？</string>
+  <string name="eim_auto_regen_body">現在のトークンは直ちに無効になります。他のアプリに貼り付け済みのコピー — 自由作業盤の「保存復元の設定 -- [979][01]」 — はすべて新しい値に更新してください。</string>
+  <string name="eim_auto_regen_done">新しい自動化トークンを生成しました。</string>
+  <string name="eim_auto_storage_title">全ファイルへのアクセスを許可しますか？</string>
+  <string name="eim_auto_storage_body">自動エクスポートは呼び出したタスクが指定したディレクトリに ZIP を書き込みます。全ファイルアクセスがない場合、上で選択したエクスポート先ディレクトリにしか書き込めません。</string>
+  <string name="eim_auto_storage_grant">設定を開く</string>
+  <string name="eim_auto_storage_later">後で</string>
+  <string name="eim_auto_progress">区分 %1$d/%2$d — %3$s</string>
+  <string name="eim_auto_progress_done">区分 %1$d/%2$d — 完了</string>
+  <string name="eim_auto_progress_unit">区分</string>
  </resources>

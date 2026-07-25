@@ -1,5 +1,14 @@
 package com.github.premnirmal.ticker.settings
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.os.Build.VERSION
+import android.os.Build.VERSION_CODES
+import android.os.Environment
+import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +30,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -31,6 +41,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -45,10 +56,12 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.premnirmal.ticker.AppPreferences
 import com.github.premnirmal.ticker.ThemePage
@@ -114,6 +127,7 @@ private fun Hub(
         ) {
             SectionHeader(stringResource(R.string.eim_title), first = true)
             ExportImportRow(status = lastExport) { showExim = true }
+            AutomationRows()
             SectionHeader(stringResource(R.string.ui_section_colours))
             SwitchRow(
                 label = stringResource(R.string.ui_dynamic_colour),
@@ -170,6 +184,132 @@ private fun ExportImportRow(status: Pair<String, Boolean>, onClick: () -> Unit) 
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+/**
+ * The 保存復元 automation rows, at the bottom of the Export/Import section (never a section of their
+ * own — every sister app keeps the controls where backup lives): the master switch, default off, and
+ * the token row that copies the full token on tap and can mint a new one.
+ */
+@Composable
+private fun AutomationRows() {
+    val context = LocalContext.current
+    var enabled by remember { mutableStateOf(AutomationAuth.isEnabled(context)) }
+    var token by remember { mutableStateOf(AutomationAuth.token(context)) }
+    var confirmRegen by remember { mutableStateOf(false) }
+    var askStorage by remember { mutableStateOf(false) }
+    val clipLabel = stringResource(R.string.eim_auto_token)
+    val copiedMsg = stringResource(R.string.eim_auto_copied)
+    val regeneratedMsg = stringResource(R.string.eim_auto_regen_done)
+
+    SwitchRow(
+        label = stringResource(R.string.eim_auto_switch),
+        subtitle = stringResource(R.string.eim_auto_switch_desc),
+        checked = enabled,
+    ) { on ->
+        enabled = on
+        AutomationAuth.setEnabled(context, on)
+        if (on && !hasAllFilesAccess()) askStorage = true
+    }
+    TokenRow(
+        token = token,
+        onCopy = {
+            copyToClipboard(context, clipLabel, token)
+            Toast.makeText(context, copiedMsg, Toast.LENGTH_SHORT).show()
+        },
+        onRegenerate = { confirmRegen = true },
+    )
+
+    if (confirmRegen) {
+        ConfirmDialog(
+            title = stringResource(R.string.eim_auto_regen_title),
+            body = stringResource(R.string.eim_auto_regen_body),
+            confirm = stringResource(R.string.eim_auto_regen),
+            dismiss = stringResource(R.string.eim_cancel),
+            onConfirm = {
+                confirmRegen = false
+                token = AutomationAuth.regenerate(context)
+                Toast.makeText(context, regeneratedMsg, Toast.LENGTH_SHORT).show()
+            },
+            onDismiss = { confirmRegen = false },
+        )
+    }
+    if (askStorage) {
+        ConfirmDialog(
+            title = stringResource(R.string.eim_auto_storage_title),
+            body = stringResource(R.string.eim_auto_storage_body),
+            confirm = stringResource(R.string.eim_auto_storage_grant),
+            dismiss = stringResource(R.string.eim_auto_storage_later),
+            onConfirm = {
+                askStorage = false
+                openAllFilesAccessSettings(context)
+            },
+            onDismiss = { askStorage = false },
+        )
+    }
+}
+
+@Composable
+private fun TokenRow(token: String, onCopy: () -> Unit, onRegenerate: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onCopy)
+            .padding(start = ITEM_INDENT, end = 16.dp, top = 6.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = stringResource(R.string.eim_auto_token), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = AutomationAuth.abbreviate(token),
+                style = MaterialTheme.typography.bodyMedium,
+                fontFamily = FontFamily.Monospace,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = stringResource(R.string.eim_auto_token_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        TextButton(onClick = onRegenerate) { Text(text = stringResource(R.string.eim_auto_regen)) }
+    }
+}
+
+@Composable
+private fun ConfirmDialog(
+    title: String,
+    body: String,
+    confirm: String,
+    dismiss: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = title) },
+        text = { Text(text = body) },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(text = confirm) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(text = dismiss) } },
+    )
+}
+
+private fun copyToClipboard(context: Context, label: String, text: String) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager ?: return
+    clipboard.setPrimaryClip(ClipData.newPlainText(label, text))
+}
+
+/** Whether a backup may be written to any absolute path an automation caller names. */
+private fun hasAllFilesAccess(): Boolean =
+    VERSION.SDK_INT < VERSION_CODES.R || Environment.isExternalStorageManager()
+
+private fun openAllFilesAccessSettings(context: Context) {
+    if (VERSION.SDK_INT < VERSION_CODES.R) return
+    val appScreen = Intent(
+        Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+        "package:${context.packageName}".toUri(),
+    )
+    runCatching { context.startActivity(appScreen) }.onFailure {
+        runCatching { context.startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)) }
     }
 }
 
