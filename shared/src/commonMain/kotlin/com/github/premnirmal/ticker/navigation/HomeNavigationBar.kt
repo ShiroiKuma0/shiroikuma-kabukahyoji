@@ -1,8 +1,10 @@
 package com.github.premnirmal.ticker.navigation
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -26,7 +28,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -47,6 +48,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.GraphicsLayer
@@ -128,7 +130,9 @@ enum class LayoutType {
 
 /**
  * Multiplatform data class describing a home bottom-navigation/rail destination. Uses resolved
- * [Painter] icons and [String] labels so that it is free of Android resource IDs.
+ * [Painter] icons and [String] labels so that it is free of Android resource IDs. [onLongPress],
+ * when set, is invoked on a long-press of the item (e.g. the Settings cog long-press opening the
+ * 白い熊 株価表示 UI page).
  */
 data class HomeBottomNavDestination(
     val route: HomeRoute,
@@ -136,7 +140,8 @@ data class HomeBottomNavDestination(
     val unselectedIcon: Painter,
     val label: String,
     val contentDescription: String = label,
-    val enabled: Boolean = true
+    val enabled: Boolean = true,
+    val onLongPress: (() -> Unit)? = null
 )
 
 /**
@@ -359,6 +364,7 @@ private fun GlassIconButton(
  * auto-sizes down so longer strings such as "Watchlist" or "Settings" always fit on a single line
  * without truncation or ellipsis.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun GlassNavigationItem(
     destination: HomeBottomNavDestination,
@@ -375,7 +381,11 @@ private fun GlassNavigationItem(
     Column(
         modifier = modifier
             .clip(GlassSelectedShape)
-            .clickable(enabled = destination.enabled, onClick = onClick)
+            .combinedClickable(
+                enabled = destination.enabled,
+                onClick = onClick,
+                onLongClick = destination.onLongPress,
+            )
             .padding(horizontal = 6.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -488,21 +498,10 @@ fun HomeNavigationRail(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     destinations.forEach { destination ->
-                        NavigationRailItem(
+                        RailItem(
+                            destination = destination,
                             selected = selectedDestination == destination.route.route,
                             onClick = { navigateToTopLevelDestination(destination) },
-                            enabled = destination.enabled,
-                            icon = {
-                                Icon(
-                                    painter = destination.selectedIcon,
-                                    contentDescription = destination.contentDescription,
-                                    tint = if (!destination.enabled) {
-                                        LocalContentColor.current.copy(alpha = 0.2f)
-                                    } else {
-                                        LocalContentColor.current
-                                    }
-                                )
-                            }
                         )
                     }
                 }
@@ -537,5 +536,55 @@ fun HomeNavigationRail(
                 }
             }
         )
+    }
+}
+
+/** Hard yellow of the 白い熊 forks' navigation-rail icons (kxkb style). */
+private val RailIconYellow = Color(0xFFFFFF00)
+
+/** Rounded pill highlight behind the selected rail icon (mimics NavigationRailItem's indicator). */
+private val RailIndicatorShape = RoundedCornerShape(16.dp)
+
+/**
+ * A rail destination item: icon-only, yellow-tinted, with long-press support (Material3's
+ * [NavigationRailItem] offers none) — a long-press of the Settings cog opens the 白い熊 株価表示 UI
+ * page via [HomeBottomNavDestination.onLongPress].
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun RailItem(
+    destination: HomeBottomNavDestination,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val tint = if (destination.enabled) RailIconYellow else RailIconYellow.copy(alpha = 0.2f)
+    Box(
+        modifier = Modifier
+            .height(56.dp)
+            .widthIn(min = 56.dp)
+            .clip(RailIndicatorShape)
+            .combinedClickable(
+                enabled = destination.enabled,
+                onClick = onClick,
+                onLongClick = destination.onLongPress,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .height(32.dp)
+                .widthIn(min = 56.dp)
+                .clip(RailIndicatorShape)
+                .background(
+                    if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = destination.selectedIcon,
+                contentDescription = destination.contentDescription,
+                tint = tint,
+            )
+        }
     }
 }
