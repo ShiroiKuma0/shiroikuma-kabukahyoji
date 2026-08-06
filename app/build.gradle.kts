@@ -48,7 +48,11 @@ repositories {
 // VERSION_NAME tracks the upstream premnirmal/StockTicker release tag; BUILD_NUMBER
 // is our fork increment — reset to 1 on each upstream rebase, +1 on every build
 // (the buildFoss task bumps it). See .claude/skills + CLAUDE.md "Fork layer".
-//   forkVersionName = "<VERSION_NAME>+<BUILD_NUMBER>"             e.g. 4.1.000+1
+//   forkVersionName = "<VERSION_NAME>+<NNN>"                      e.g. 4.1.002+002
+//                     The counter is zero-padded to three digits so versionNames,
+//                     ~/tmp APK filenames and release tags all sort in build order
+//                     and agree with each other. gradle.properties keeps the raw
+//                     integer (BUILD_NUMBER=2) — the buildFoss bump matches on that.
 //   forkVersionCode = (major*100000 + minor*1000 + patch) * 100 + BUILD_NUMBER
 //                     e.g. 40100001 — monotonic across upstream bumps and within
 //                     Android's signed 32-bit versionCode cap (upstream's native
@@ -57,7 +61,7 @@ val appIdBase = (project.findProperty("APP_ID") as String?) ?: "com.github.premn
 val upstreamVersionName = (project.findProperty("VERSION_NAME") as String?) ?: "0.0.0"
 val forkBuildNumber = (project.findProperty("BUILD_NUMBER") as String?)?.trim()?.toInt() ?: 1
 val (forkMajor, forkMinor, forkPatch) = upstreamVersionName.split(".").map { it.trim().toInt() }
-val forkVersionName = "$upstreamVersionName+$forkBuildNumber"
+val forkVersionName = "$upstreamVersionName+${forkBuildNumber.toString().padStart(3, '0')}"
 val forkVersionCode = ((forkMajor * 100000) + (forkMinor * 1000) + forkPatch) * 100 + forkBuildNumber
 
 // Best-effort previous-version tag for the BuildConfig field (non-fatal if tags absent).
