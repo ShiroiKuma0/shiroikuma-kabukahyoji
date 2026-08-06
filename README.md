@@ -10,7 +10,7 @@ A fork of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) wi
 
 Installs **side-by-side** with the official Stocks Widget (app id `shiroikuma.kabukahyoji`).
 
-**📥 Latest release: [`4.1.000+11`](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases)
+**📥 Latest release: [`4.1.002+1`](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases)
 
 </div>
 
