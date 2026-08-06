@@ -51,7 +51,8 @@ Everything this fork builds on top of [premnirmal/StockTicker](https://github.co
 ## Packaging
 - Side-by-side app: application id `shiroikuma.kabukahyoji`, launcher label **白い熊 株価表示**; the code namespace stays `com.github.premnirmal.tickerwidget`.
 - Ships the **purefoss** flavor: no Firebase, no Crashlytics, no Play services, no `google-services.json`.
-- Fork versioning `versionName = <upstream tag>+<build>` (e.g. `4.1.002+1`), `versionCode = (major*100000 + minor*1000 + patch)*100 + build` — monotonic across upstream bumps and safe within Android's 32-bit cap.
+- Fork versioning `versionName = <upstream tag>+<NNN>` (e.g. `4.1.002+002`), `versionCode = (major*100000 + minor*1000 + patch)*100 + build` — monotonic across upstream bumps and safe within Android's 32-bit cap.
+- The build counter is **zero-padded to three digits** in the versionName, so the manifest version, the APK filename and the release tag are the same string and sort in build order. `gradle.properties` keeps the raw integer, because the `buildFoss` auto-bump rewrites it by exact match.
 - `buildFoss` Gradle task: assembles the signed release, copies the APK to `~/tmp/`, auto-increments the build number. Signing via gitignored `app/keystore.properties`.
 - **arm64-v8a-only** APK (unused ABIs stripped).
 - `MANAGE_EXTERNAL_STORAGE` declared so an automation caller may name any absolute backup directory; without the grant the app falls back to its configured SAF directory, or answers `ERROR:no-storage-access`.
