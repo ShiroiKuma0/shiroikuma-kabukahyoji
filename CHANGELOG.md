@@ -1,6 +1,6 @@
 # 白い熊 株価表示 — changelog vs stock StockTicker
 
-Everything this fork builds on top of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) (base: upstream release `4.1.000`).
+Everything this fork builds on top of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) (base: upstream release `4.1.002`).
 
 ## Major features
 
@@ -51,7 +51,16 @@ Everything this fork builds on top of [premnirmal/StockTicker](https://github.co
 ## Packaging
 - Side-by-side app: application id `shiroikuma.kabukahyoji`, launcher label **白い熊 株価表示**; the code namespace stays `com.github.premnirmal.tickerwidget`.
 - Ships the **purefoss** flavor: no Firebase, no Crashlytics, no Play services, no `google-services.json`.
-- Fork versioning `versionName = <upstream tag>+<build>` (e.g. `4.1.000+8`), `versionCode = (major*100000 + minor*1000 + patch)*100 + build` — monotonic across upstream bumps and safe within Android's 32-bit cap.
+- Fork versioning `versionName = <upstream tag>+<build>` (e.g. `4.1.002+1`), `versionCode = (major*100000 + minor*1000 + patch)*100 + build` — monotonic across upstream bumps and safe within Android's 32-bit cap.
 - `buildFoss` Gradle task: assembles the signed release, copies the APK to `~/tmp/`, auto-increments the build number. Signing via gitignored `app/keystore.properties`.
 - **arm64-v8a-only** APK (unused ABIs stripped).
 - `MANAGE_EXTERNAL_STORAGE` declared so an automation caller may name any absolute backup directory; without the grant the app falls back to its configured SAF directory, or answers `ERROR:no-storage-access`.
+
+## Upstream base
+
+The fork stack is replayed onto each upstream release tag; it currently sits on `4.1.002`.
+
+- **Rebased `4.1.000` → `4.1.002`** (19 fork commits). Upstream's own work in that span was mostly iOS/Kotlin-Multiplatform (TodayStocks for iOS, WidgetKit widget fixes, Xcode 26 CI), plus a repo-wide detekt sweep and one Android bugfix — saved alerts not appearing when re-entering the quote-detail screen.
+- **Upstream renamed the app "Stock Ticker" → "Today Stocks"**; this fork keeps its own launcher label **白い熊 株価表示**.
+- Where upstream's detekt sweep restructured code the fork had only reformatted — the `buildQuoteDetails` `add()` helper and the `toMutablePreferences` cast wrapping — the fork **adopts upstream's structure** rather than forcing the older diff, keeping the fork layer to genuine behaviour changes.
+- The fork's `AppTheme` remains a superset of upstream's: same Material You dynamic-colour resolution, plus the per-page colour/typography overrides and the pure-black surface ladder.
