@@ -1,6 +1,6 @@
 # 白い熊 株価表示 — changelog vs stock StockTicker
 
-Everything this fork builds on top of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) (base: upstream release `4.1.002`).
+Everything this fork builds on top of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) (base: upstream release `4.1.003`).
 
 ## Major features
 
@@ -47,11 +47,12 @@ Everything this fork builds on top of [premnirmal/StockTicker](https://github.co
 ## Fixes & behavior
 - GitHub new-issue form fixed and templates de-branded to this fork.
 - Repo-wide detekt `autoCorrect` style pass; explicit `Locale.ROOT` in colour-hex formatting.
+- **Inherited upstream CI removed** — all seven workflow files (`android`, `detekt`, `unit-tests`, `ios`, `version-code`, `issue-check`, `copilot-setup-steps`) deleted and GitHub Actions switched off repo-wide. Every run failed here and did nothing but mail a failure notice on each push: the fork has no `google-services.json`, no CI keystore and no iOS side, and the real build is `buildFoss` run locally. `.github/ISSUE_TEMPLATE/` stays.
 
 ## Packaging
 - Side-by-side app: application id `shiroikuma.kabukahyoji`, launcher label **白い熊 株価表示**; the code namespace stays `com.github.premnirmal.tickerwidget`.
 - Ships the **purefoss** flavor: no Firebase, no Crashlytics, no Play services, no `google-services.json`.
-- Fork versioning `versionName = <upstream tag>+<NNN>` (e.g. `4.1.002+002`), `versionCode = (major*100000 + minor*1000 + patch)*100 + build` — monotonic across upstream bumps and safe within Android's 32-bit cap.
+- Fork versioning `versionName = <upstream tag>+<NNN>` (e.g. `4.1.003+001`), `versionCode = (major*100000 + minor*1000 + patch)*100 + build` — monotonic across upstream bumps and safe within Android's 32-bit cap.
 - The build counter is **zero-padded to three digits** in the versionName, so the manifest version, the APK filename and the release tag are the same string and sort in build order. `gradle.properties` keeps the raw integer, because the `buildFoss` auto-bump rewrites it by exact match.
 - `buildFoss` Gradle task: assembles the signed release, copies the APK to `~/tmp/`, auto-increments the build number. Signing via gitignored `app/keystore.properties`.
 - **arm64-v8a-only** APK (unused ABIs stripped).
@@ -59,8 +60,9 @@ Everything this fork builds on top of [premnirmal/StockTicker](https://github.co
 
 ## Upstream base
 
-The fork stack is replayed onto each upstream release tag; it currently sits on `4.1.002`.
+The fork stack is replayed onto each upstream release tag; it currently sits on `4.1.003`.
 
+- **Rebased `4.1.002` → `4.1.003`** (24 fork commits, zero conflicts). Upstream's three commits in that span touched only files the fork has never customized: a fix for the price chart's marker truncating the value line (with the marker's price format aligned to the rest of the app), more quotes fitted into the iOS compact widget, and the bot's `version.properties` bump. The overlap between the fork's changed files and upstream's was empty, so the whole stack replayed untouched.
 - **Rebased `4.1.000` → `4.1.002`** (19 fork commits). Upstream's own work in that span was mostly iOS/Kotlin-Multiplatform (TodayStocks for iOS, WidgetKit widget fixes, Xcode 26 CI), plus a repo-wide detekt sweep and one Android bugfix — saved alerts not appearing when re-entering the quote-detail screen.
 - **Upstream renamed the app "Stock Ticker" → "Today Stocks"**; this fork keeps its own launcher label **白い熊 株価表示**.
 - Where upstream's detekt sweep restructured code the fork had only reformatted — the `buildQuoteDetails` `add()` helper and the `toMutablePreferences` cast wrapping — the fork **adopts upstream's structure** rather than forcing the older diff, keeping the fork layer to genuine behaviour changes.
