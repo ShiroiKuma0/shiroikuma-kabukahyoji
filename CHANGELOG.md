@@ -1,6 +1,6 @@
 # 白い熊 株価表示 — changelog vs stock StockTicker
 
-Everything this fork builds on top of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) (base: upstream release `4.1.003`).
+Everything this fork builds on top of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) (base: upstream release `4.1.004`).
 
 ## Major features
 
@@ -60,8 +60,9 @@ Everything this fork builds on top of [premnirmal/StockTicker](https://github.co
 
 ## Upstream base
 
-The fork stack is replayed onto each upstream release tag; it currently sits on `4.1.003`.
+The fork stack is replayed onto each upstream release tag; it currently sits on `4.1.004`.
 
+- **Rebased `4.1.003` → `4.1.004`** (26 fork commits, zero conflicts). Upstream's one code commit in that span fixes the price chart's axis labels going invisible under a forced app theme: Vico derived their colour from the system dark/light setting rather than the app's `MaterialTheme`, so a forced-dark app on a light device drew them unreadable. Both axes now take an explicit label component bound to `onSurfaceVariant`. This lands squarely in fork territory — the pure-black dark mode is exactly such a forced theme — so it is a fix the fork gains rather than merely inherits. Nothing else changed but the bot's `version.properties` bump; the overlap with the fork's changed files was empty and the whole stack replayed untouched.
 - **Rebased `4.1.002` → `4.1.003`** (24 fork commits, zero conflicts). Upstream's three commits in that span touched only files the fork has never customized: a fix for the price chart's marker truncating the value line (with the marker's price format aligned to the rest of the app), more quotes fitted into the iOS compact widget, and the bot's `version.properties` bump. The overlap between the fork's changed files and upstream's was empty, so the whole stack replayed untouched.
 - **Rebased `4.1.000` → `4.1.002`** (19 fork commits). Upstream's own work in that span was mostly iOS/Kotlin-Multiplatform (TodayStocks for iOS, WidgetKit widget fixes, Xcode 26 CI), plus a repo-wide detekt sweep and one Android bugfix — saved alerts not appearing when re-entering the quote-detail screen.
 - **Upstream renamed the app "Stock Ticker" → "Today Stocks"**; this fork keeps its own launcher label **白い熊 株価表示**.
