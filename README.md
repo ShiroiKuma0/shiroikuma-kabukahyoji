@@ -6,11 +6,11 @@
 
 **A stocks watchlist and home-screen widget, rebuilt black-and-yellow and customizable down to every element.**
 
-A fork of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) with **major additions**: a full per-page / per-element UI customization page, settings export & import, one-command backup from 白い熊 自由作業盤, a pure-black yellow-accented theme, and an in-app language switch.
+A fork of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) with **major additions**: a full per-page / per-element UI customization page, settings export & import, headless backup **and restore** driven by 白い熊 自由作業盤 and 白い熊 応用管理, a pure-black yellow-accented theme, and an in-app language switch.
 
 Installs **side-by-side** with the official Stocks Widget (app id `shiroikuma.kabukahyoji`).
 
-**📥 Latest release: [`4.1.004+001`](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases)
+**📥 Latest release: [`4.1.004+002`](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases/latest)** — [all releases & APK downloads »](https://github.com/ShiroiKuma0/shiroikuma-kabukahyoji/releases)
 
 </div>
 
@@ -27,7 +27,16 @@ The first section of the UI page backs up **everything settable in the app** —
 ---
 
 ## 🤖 Backed up with every sister app — 保存復元
-Turn on **Automation export** at the bottom of the Export/Import section and this app joins 白い熊 自由作業盤's 保存復元 batch: one run backs up every sister app in turn. 自由作業盤 fires a token-gated broadcast, the app exports itself **headlessly** — no Activity, no tapping — and answers with the file it wrote, its exact byte count and a human-readable size, which the batch collects into one ✓/✗ summary. The caller can name the target directory, ask for a subset of categories, or query the category list first; while the export runs the app reports progress with **real counts** (`区分 3/5 — 外観・UI`), never a percentage. A 24-byte token, copied to the clipboard by tapping the token row and regenerable at will, is the only key — the switch defaults to off, and the token itself is kept out of every backup.
+This app ships **already on** 白い熊 自由作業盤's 保存復元 batch: one run backs up every sister app in turn. 自由作業盤 fires a broadcast, the app exports itself **headlessly** — no Activity, no tapping — and answers with the file it wrote, its exact byte count and a human-readable size, which the batch collects into one ✓/✗ summary. The caller can name the target directory, ask for a subset of categories, or query the category list first; while the export runs the app reports progress with **real counts** (`区分 3/5 — 外観・UI`), never a percentage, and a long run can be stopped from the panel that started it. Every archive is written to a `.part` file and renamed only once it is complete, so a cancelled or killed export never leaves something that looks like a good backup.
+
+Nothing needs turning on and nothing needs pasting. **「Automation export」 defaults on**, and **「Use authorization token?」 defaults off** — a token is an extra a caller may be asked for, not the gate, and one sent to an app that is not asking for it is ignored rather than refused. Both rows sit at the bottom of the Export/Import section, with the token itself shown only while it is actually being required, and kept out of every backup.
+
+---
+
+## 🧬 Survives a wiped phone — the 応用管理 data door
+Beyond the settings ZIP, this app answers a **content-provider door** that lets 白い熊 応用管理 back it up *with its data* and put that data back on a phone that has just been reset. The archive moves through a **file descriptor the caller opens** — never a path — so it lands inside 応用管理's encrypted, checksummed backup rather than beside it, and the capability expires the moment the descriptor closes.
+
+A pasted secret cannot survive a wipe, so identity is not a shared token here: every call is checked against an **exact package name**, cross-checked against the uid the kernel reports, and matched against a **pinned signing certificate**. A restore is awaited all the way to disk before it reports success — including the watchlist itself, which is the one thing a half-flushed restore would silently lose.
 
 ---
 

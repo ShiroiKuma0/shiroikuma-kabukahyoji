@@ -2,6 +2,47 @@
 
 Everything this fork builds on top of [premnirmal/StockTicker](https://github.com/premnirmal/StockTicker) (base: upstream release `4.1.004`).
 
+## 白い熊 株価表示 4.1.004+002 — 2026-09-04
+
+Built on upstream release `4.1.004`. Implements the 保存復元 sister-app contract **v2**, so 白い熊 応用管理 can back this app up *with its data* and restore it onto a phone that has just been wiped.
+
+### Restore-path data loss — two real bugs, both fixed
+- **The watchlist would have been lost on every automated restore.** `SharedPreferencesTickersStore.saveTickers` writes through `androidx.core.content.edit { }`, which **defaults to `commit = false`** — so the restored ticker symbols were an `apply()` in disguise, with no literal `apply()` anywhere in the file for a source grep to find. 応用管理 force-stops an app with `Process.killProcess` the instant it reports a successful import, which leaves that write nowhere to land: the Room quotes would arrive, the symbol list would not, and the restore would report success over an **empty portfolio**.
+- **The portfolio itself persisted through a fire-and-forget coroutine.** `StocksProvider.addPortfolio` launches its `storage.saveQuotes` and returns, so an import could answer `OK` while the database write was still in flight.
+- Fixed with an awaited `addPortfolioNow`, plus an empty `commit()` per preferences file the restore spans, which blocks on that file's write lock until any queued write has landed. The ordinary `addPortfolio` keeps its `launch` — that is what lets the UI repaint on the next frame — and `saveTickers` stays asynchronous, because it sits on the hot path with main-thread callers and making it synchronous would trade a truncated restore for an ANR.
+- Audited the rest of the restore path rather than assuming: `AppPreferences` goes through blocking DataStore (durable on return, no debounce to wait out), the widget preferences already commit their own editor, and fonts are written with `File.writeBytes`.
+
+### `<queries>` — replies had been silently discarded since Android 11
+- The manifest carried **no `<queries>` element at all**, so `setPackage` on every reply broadcast failed silently: the export ran, wrote its archive correctly, and was never heard of by the caller. Both 保存復元 callers — `shiroikuma.jiyusagyoban` (which drives the batch) and `shiroikuma.oyokanri` (which restores) — are now declared. This also lets the data door read a caller's signing certificate, which is otherwise refused as unreadable.
+
+### The gate is now open by default (contract §2)
+- `automation_enabled` **defaults on** and a new `automation_require_token` **defaults off**, both decided in a single `refuse()` function so "disabled" and "bad token" cannot drift apart across entry points.
+- **A token sent to an app that does not require one is ignored, never refused** — tokens outlive the settings they were pasted for, and refusing them would turn one switch being off into half a batch mysteriously failing.
+- All three flag writes use `commit()`. With the default flipped, a write that never reaches disk no longer falls back to "off" — it falls back to **on**, so the gate would fail open.
+- Settings rows follow: the master switch, then 「Use authorization token?」, with the token row shown **only while a token is actually being required**.
+
+### The data door (contract §2a)
+- New exported `ContentProvider` at `shiroikuma.kabukahyoji.automation` with `describe` / `export` / `import` / `cancel`. **`import` exists only here** — the broadcast receiver is exported without a permission, so an import there would let any app on the phone wipe this one.
+- Callers are identified by the framework and checked three ways: an **exact package name** (never a prefix — a prefix is not an identity, and any sideloaded app may name itself `shiroikuma.anything`), a **uid cross-check** against what the kernel reports, and a **pinned signing certificate**.
+- The payload moves through a **`ParcelFileDescriptor` the caller supplies** — not a path, not a URI — so the archive lands inside 応用管理's encrypted, checksummed backup instead of beside it in plaintext. The descriptor is duplicated before it leaves the binder call and closed in a `finally`. As a consequence the automation path no longer needs `MANAGE_EXTERNAL_STORAGE` at all.
+- Long work runs in a `specialUse` foreground service that goes foreground as its **first statement**, before any early return: once `startForegroundService` has been called the platform requires it whatever the service then decides, so a caller retrying with a stale job id would otherwise have **killed this app mid-backup**. A stale or already-claimed job stops silently, because that job has already had its one terminal reply.
+- `describe` answers from the manifest, `PackageManager` and a plain enum only — never the DI graph. A provider's `onCreate` runs before `Application.onCreate`, which is exactly the clean-phone case where a provider call is what starts the process.
+- A large import is spooled to a cache file rather than into memory, and validated there before anything is applied.
+
+### `CANCEL_EXPORT`, and archives that are never half-written
+- New `<pkg>.action.CANCEL_EXPORT`, which this fork lacked entirely, on the same exported receiver — the stop path lives behind an unexported service that a third-party app cannot start, so the cancel is routed through the receiver and signalled internally. It is safe to send at any time: a cancel arriving when nothing is running is a silent no-op, not an error.
+- On cancel, in order: the write loop unwinds **at an entry boundary** rather than mid-write, the partial file is deleted, `ERROR:cancelled` is sent as the terminal reply for the **original** request through the same single-fire guard, and the export guard is released.
+- Every export — automated or hand-run — now writes `<name>.part` and renames only once the archive is closed and complete. 白い熊 keeps every app's backups in one directory sorted by date, where a truncated archive would otherwise silently become "the latest backup" of this app.
+- The concurrent-export guard is process-local and released in a `finally`, never persisted: a persisted flag wedges the app permanently after a single crash.
+
+### Progress
+- Progress broadcasts now carry **`item`** — the category id being written — which is how the calling panel knows which row to highlight; without it a count is drawn against the wrong row.
+- Progress on the data door, with the **`job_id` as the correlation id** in both `job_id` and `reply_id`, plus a 15-second heartbeat that re-sends the last true line. Justified even for a small archive: the export writes into a descriptor the caller supplied, which may be a pipe, so a category can block for as long as the caller is slow to drain it.
+- Fixed a conditional `setPackage` on the progress sender. Since API 26 an implicit broadcast reaches no manifest-declared receiver at all, so omitting it does not send progress more widely — it sends none.
+
+### Capability discovery
+- Three `shiroikuma.automation.*` `<meta-data>` entries (contract 2, format 1, min\_format 1), **integer-typed**, so 応用管理 can answer "can this app be backed up" for an app that is currently frozen, without waking it.
+
 ## Major features
 
 ### 白い熊 株価表示 UI customization page
