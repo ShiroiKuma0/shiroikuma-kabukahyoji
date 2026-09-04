@@ -433,6 +433,37 @@ class StocksProvider constructor(
     override fun getStock(ticker: String): Quote? = quoteMap[ticker]
 
     override fun addPortfolio(portfolio: List<Quote>) {
+        applyPortfolio(portfolio)
+        coroutineScope.launch {
+            persistPortfolio(portfolio)
+            fetch()
+        }
+    }
+
+    /**
+     * [addPortfolio], but it does not return until the quotes are actually **on disk**.
+     *
+     * The fire-and-forget `launch` above is deliberate and stays: it is what lets the UI repaint on
+     * the next frame instead of after a database round trip. But the 保存復元 automation import
+     * cannot use it. 応用管理 force-stops this process with `Process.killProcess` — a `SIGKILL` —
+     * the instant the import replies `OK`, which leaves an in-flight Room write nowhere to land:
+     * the restore would report success and the portfolio, this app's single most important
+     * category, would silently come back empty.
+     *
+     * So the awaitable path lives here, on the class that owns the write, and the ordinary setter
+     * delegates to the same two halves rather than duplicating them.
+     *
+     * No [fetch] afterwards, unlike [addPortfolio]: a restore is not the moment to reach for the
+     * network, and the process is about to be killed regardless. [fetchLocal] is enough to leave
+     * the in-memory portfolio consistent with what was just written.
+     */
+    suspend fun addPortfolioNow(portfolio: List<Quote>) {
+        applyPortfolio(portfolio)
+        persistPortfolio(portfolio)
+    }
+
+    /** The in-memory half: ticker set, quote map, widgets. Synchronous on the caller's thread. */
+    private fun applyPortfolio(portfolio: List<Quote>) {
         synchronized(quoteMap) {
             portfolio.forEach {
                 val symbol = it.symbol
@@ -442,10 +473,11 @@ class StocksProvider constructor(
         }
         saveTickers()
         widgetDataProvider.updateWidgets(tickerSet.toList())
-        coroutineScope.launch {
-            storage.saveQuotes(portfolio)
-            fetchLocal()
-            fetch()
-        }
+    }
+
+    /** The durable half: the Room rows, and the re-read that makes the flows agree with them. */
+    private suspend fun persistPortfolio(portfolio: List<Quote>) {
+        storage.saveQuotes(portfolio)
+        fetchLocal()
     }
 }

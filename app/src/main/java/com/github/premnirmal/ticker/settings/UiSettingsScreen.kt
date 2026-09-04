@@ -189,13 +189,17 @@ private fun ExportImportRow(status: Pair<String, Boolean>, onClick: () -> Unit) 
 
 /**
  * The 保存復元 automation rows, at the bottom of the Export/Import section (never a section of their
- * own — every sister app keeps the controls where backup lives): the master switch, default off, and
- * the token row that copies the full token on tap and can mint a new one.
+ * own — every sister app keeps the controls where backup lives).
+ *
+ * Three rows, in contract order: the master switch (**default ON**, kept only so 白い熊 can shut
+ * this app out); 「Use authorization token?」 (**default OFF** — in v2 a token is an extra a caller
+ * may be asked for, not the gate); and the token row itself, shown only while row 2 is on.
  */
 @Composable
 private fun AutomationRows() {
     val context = LocalContext.current
     var enabled by remember { mutableStateOf(AutomationAuth.isEnabled(context)) }
+    var requireToken by remember { mutableStateOf(AutomationAuth.isTokenRequired(context)) }
     var token by remember { mutableStateOf(AutomationAuth.token(context)) }
     var confirmRegen by remember { mutableStateOf(false) }
     var askStorage by remember { mutableStateOf(false) }
@@ -212,14 +216,26 @@ private fun AutomationRows() {
         AutomationAuth.setEnabled(context, on)
         if (on && !hasAllFilesAccess()) askStorage = true
     }
-    TokenRow(
-        token = token,
-        onCopy = {
-            copyToClipboard(context, clipLabel, token)
-            Toast.makeText(context, copiedMsg, Toast.LENGTH_SHORT).show()
-        },
-        onRegenerate = { confirmRegen = true },
-    )
+    SwitchRow(
+        label = stringResource(R.string.eim_auto_require_token),
+        subtitle = stringResource(R.string.eim_auto_require_token_desc),
+        checked = requireToken,
+    ) { on ->
+        requireToken = on
+        AutomationAuth.setTokenRequired(context, on)
+    }
+    // Shown only when a token is actually being asked for: a 48-character secret sitting under an
+    // off switch invites 白い熊 to paste it somewhere it will do nothing.
+    if (requireToken) {
+        TokenRow(
+            token = token,
+            onCopy = {
+                copyToClipboard(context, clipLabel, token)
+                Toast.makeText(context, copiedMsg, Toast.LENGTH_SHORT).show()
+            },
+            onRegenerate = { confirmRegen = true },
+        )
+    }
 
     if (confirmRegen) {
         ConfirmDialog(

@@ -178,7 +178,8 @@ object SettingsExport : KoinComponent {
         context: Context,
         selection: Selection,
         out: OutputStream,
-        onProgress: (current: Int, total: Int, label: String) -> Unit = { _, _, _ -> },
+        onProgress: (current: Int, total: Int, id: String, label: String) -> Unit = { _, _, _, _ -> },
+        isCancelled: () -> Boolean = { false },
     ): String {
         val lines = mutableListOf<String>()
         val total = selection.size
@@ -194,11 +195,15 @@ object SettingsExport : KoinComponent {
             writeEntry(zip, "manifest.json", manifest.toString(JSON_INDENT))
 
             for (cat in Cat.entries.filter { it in selection.cats }) {
-                onProgress(++current, total, context.getString(cat.labelRes))
+                // Between entries, never mid-write: a cancelled export unwinds at a boundary so the
+                // partial file is a truncated ZIP we delete, not a torn one we might rename.
+                if (isCancelled()) return@use
+                onProgress(++current, total, cat.id, context.getString(cat.labelRes))
                 lines += writeCategory(context, zip, cat)
             }
             for (sub in Sub.entries.filter { it in selection.subs }) {
-                onProgress(++current, total, context.getString(sub.labelRes))
+                if (isCancelled()) return@use
+                onProgress(++current, total, sub.id, context.getString(sub.labelRes))
                 lines += writeSub(context, zip, sub)
             }
         }
@@ -326,7 +331,14 @@ object SettingsExport : KoinComponent {
         Cat.entries.firstOrNull { it.id == id } ?: Sub.entries.firstOrNull { it.id == id }?.parent
 
     /** Applies the selected parts of an export ZIP, skipping absent ones. Returns a summary. */
-    fun import(context: Context, zip: ByteArray, selection: Selection): String {
+    /**
+     * Restores [selection] from [zip], merging per key and skipping absent categories.
+     *
+     * `suspend` because of the portfolio: see [flushForRestore] and
+     * [com.github.premnirmal.ticker.model.StocksProvider.addPortfolioNow] for why this must not
+     * return until every write has actually landed.
+     */
+    suspend fun import(context: Context, zip: ByteArray, selection: Selection): String {
         val files = readZip(zip)
         val lines = mutableListOf<String>()
         for (cat in Cat.entries.filter { it in selection.cats }) {
@@ -340,16 +352,64 @@ object SettingsExport : KoinComponent {
             }
             if (n > 0) lines += "${context.getString(sub.labelRes)}: $n"
         }
+        flushForRestore(context)
         return lines.joinToString("\n")
     }
 
-    private fun importCategory(context: Context, cat: Cat, json: String): String = when (cat) {
+    /**
+     * Make every write this restore touched durable, before anyone is told it succeeded.
+     *
+     * 応用管理 force-stops this app with `Process.killProcess` — a `SIGKILL` — the instant the
+     * automation import replies `OK`. Anything still queued at that moment is simply lost, and the
+     * restore reports success over missing data. It is invisible in testing, because a hand-run
+     * import from the Export/Import panel is followed by an orderly lifecycle that flushes properly;
+     * only the automated path kills the process cold.
+     *
+     * What this app actually owes, audited write by write rather than by grepping for `apply()`:
+     *
+     * - **The settings themselves owe nothing.** [AppPreferences] writes through
+     *   `DataStorePreferenceStore`, whose setter is `runBlockingPreferences { dataStore.edit { … } }`
+     *   — Preferences DataStore writes temp-file-then-rename and does not resume until that is
+     *   durable, so `general` and `appearance` have already landed by the time their setter returns.
+     * - **The widget prefs commit their own editor** ([importWidgets]).
+     * - **Fonts** go through `File.writeBytes`, which is durable on return.
+     * - **The portfolio needed real work**: `addPortfolio` persists its Room rows through a
+     *   fire-and-forget `coroutineScope.launch`, so [importCategory] calls `addPortfolioNow`, which
+     *   awaits them.
+     * - **And the watchlist was the one that would actually have been lost.** `saveTickers` reaches
+     *   `SharedPreferencesTickersStore`, which uses `androidx.core.content.edit { }` —
+     *   **that defaults to `commit = false`**, so the restored ticker symbols were an `apply()` in
+     *   disguise, with no literal `apply()` anywhere to find. The empty `commit()` below blocks on
+     *   that file's write lock until the queued write has landed, which is why it need not know
+     *   which keys were pending: `SharedPreferences` keeps one in-memory map per file, the earlier
+     *   `apply()` has already published into it, and `commit()` writes that whole map.
+     *
+     * Flushing here rather than switching `saveTickers` to `commit = true` is deliberate: that
+     * setter is on the ordinary hot path (every add, every fetch) and some callers are on the main
+     * thread, so swapping it would trade a truncated restore for an ANR. Both import callers — the
+     * data service and the panel's `withContext(Dispatchers.IO)` — are off the main thread, so the
+     * synchronous write is free here.
+     */
+    @SuppressLint("ApplySharedPref")
+    private fun flushForRestore(context: Context) {
+        // Every prefs file the restore spans, flushed whole. The widget files re-commit harmlessly.
+        val files = buildList {
+            add(AppPreferences.PREFS_NAME)
+            widgetIds().forEach { add("$WIDGET_PREFS_PREFIX$it") }
+        }
+        for (name in files) {
+            runCatching { context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().commit() }
+        }
+    }
+
+    private suspend fun importCategory(context: Context, cat: Cat, json: String): String = when (cat) {
         Cat.GENERAL -> importGeneral(json).toString()
         Cat.APPEARANCE -> importAppearance(json).toString()
         Cat.WIDGETS -> importWidgets(context, json).toString()
         Cat.PORTFOLIO -> {
             val portfolio = portfolioSerializer.deserializePortfolio(json)
-            stocksProvider.addPortfolio(portfolio)
+            // Awaited, not launched — the Room write must have landed before we report success.
+            stocksProvider.addPortfolioNow(portfolio)
             portfolio.size.toString()
         }
     }

@@ -13,6 +13,21 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- The 保存復元 data door streams an archive through a caller-supplied descriptor in a
+         foreground service; at targetSdk 34+ the specialUse type needs its permission as well. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <!-- Package visibility for the two 保存復元 callers. Without this, `setPackage` on our reply
+         broadcast fails SILENTLY on Android 11+ — the export runs, writes correctly and is never
+         heard of — and the data door cannot read a caller's signing certificate, so a legitimate
+         call is refused as "signature unreadable". This fork had no <queries> element at all until
+         2026-09-04, so its §1 replies had been discarded for as long as the receiver existed.
+         BOTH callers, always: 応用管理 restores, but 自由作業盤 is what drives the §1 batch. -->
+    <queries>
+        <package android:name="shiroikuma.oyokanri" />
+        <package android:name="shiroikuma.jiyusagyoban" />
+    </queries>
 
     <uses-sdk tools:overrideLibrary="androidx.browser,com.google.firebase.iid"/>
     <application
@@ -112,8 +127,39 @@
             <intent-filter>
                 <action android:name="${applicationId}.action.EXPORT_STATE" />
                 <action android:name="${applicationId}.action.LIST_CATEGORIES" />
+                <!-- The cancel must be reachable from OUTSIDE: the stop path lives behind an
+                     unexported service, which a third-party app cannot start, so it is routed
+                     through this receiver and signalled internally. -->
+                <action android:name="${applicationId}.action.CANCEL_EXPORT" />
             </intent-filter>
         </receiver>
+
+        <!-- 保存復元 v2: the data door. Exported with no permission deliberately — a custom
+             permission could only be `normal` (any app may hold it) or `signature` (impossible:
+             every app in this family has its own keystore), and neither buys anything the caller
+             check in AutomationCallers does not already give. -->
+        <provider
+            android:name="com.github.premnirmal.ticker.automation.AutomationProvider"
+            android:authorities="${applicationId}.automation"
+            android:exported="true"
+            tools:ignore="ExportedContentProvider" />
+
+        <service
+            android:name="com.github.premnirmal.ticker.automation.AutomationDataService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Automation data export/import" />
+        </service>
+
+        <!-- Capability discovery. Read across every installed package at once, with
+             MATCH_UNINSTALLED_PACKAGES | MATCH_DISABLED_COMPONENTS, because a frozen app cannot be
+             asked anything and 白い熊 freezes aggressively. These are INTEGERS: aapt2 stores a bare
+             numeric android:value as an int, so the reader uses getInt, not getString. -->
+        <meta-data android:name="shiroikuma.automation.contract" android:value="2" />
+        <meta-data android:name="shiroikuma.automation.format" android:value="1" />
+        <meta-data android:name="shiroikuma.automation.min_format" android:value="1" />
 
         <!-- Glance Widget -->
         <receiver android:name="com.github.premnirmal.ticker.widget.StockWidget"

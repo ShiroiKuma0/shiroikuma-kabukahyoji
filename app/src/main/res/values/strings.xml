@@ -310,9 +310,14 @@
   <string name="eim_import_none">No 白い熊 株価表示 export found in that file.</string>
   <!-- 保存復元 automation (sister-app triggered headless export) -->
   <string name="eim_auto_switch">Automation export</string>
-  <string name="eim_auto_switch_desc">Let sister-app tasks (白い熊 自由作業盤) trigger this app\'s export with the token-gated intent.</string>
+  <string name="eim_auto_switch_desc">Let sister apps (白い熊 自由作業盤, 白い熊 応用管理) trigger this app\'s export and back its data up.</string>
+  <string name="eim_auto_require_token">Use authorization token?</string>
+  <string name="eim_auto_require_token_desc">Off: any sister app may drive the automation. On: a caller must also present the token below. Either way, the data door checks the caller\'s package and signature.</string>
   <string name="eim_auto_token">Automation token</string>
   <string name="eim_auto_token_hint">Tap to copy the full token</string>
+  <string name="eim_auto_channel">Automation data</string>
+  <string name="eim_auto_exporting">Writing app data…</string>
+  <string name="eim_auto_importing">Restoring app data…</string>
   <string name="eim_auto_copied">Automation token copied to the clipboard.</string>
   <string name="eim_auto_regen">Regenerate</string>
   <string name="eim_auto_regen_title">Regenerate the automation token?</string>
